@@ -61,6 +61,12 @@ export default class BaseShapes {
         this.height = undefined;
 
         /**
+         * benchmarking checkpoints and times
+         * @type {*[]}
+         */
+        this.benchmarking = [];
+
+        /**
          * render options
          */
         this.opts = options || {};
@@ -131,6 +137,10 @@ export default class BaseShapes {
      * precalc and initialize some constants
      */
     init() {
+        let benchmark;
+        if (this.opts.benchmark) {
+            benchmark = { start: Date.now(), title: 'initialization'}
+        }
         this.dots = [];
         this.buckets = [];
         this.w = this.inputSource.width;
@@ -151,10 +161,25 @@ export default class BaseShapes {
 
         this.width = this.inputSource.width;
         this.height = this.inputSource.height;
+
+        if (benchmark) {
+            benchmark.end = Date.now();
+            this.benchmarking.push(benchmark);
+            benchmark = { start: Date.now(), title: 'process'}
+        }
         this.processPixels();
+
+        if (benchmark) {
+            benchmark.end = Date.now();
+            this.benchmarking.push(benchmark);
+        }
     }
 
     render() {
+        let benchmark;
+        if (this.opts.benchmark) {
+            benchmark = { start: Date.now(), title: 'render' };
+        }
         for (let y = 0; y < this.H; y++) {
             for (let x = 0; x < this.W; x++) {
                 const i = y * (this.W * 4) + x * 4;
@@ -185,18 +210,33 @@ export default class BaseShapes {
                 theDot.v.push(this.opts.inverse ? green : 255 - green);
             }
         }
+        if (benchmark) {
+            benchmark.end = Date.now();
+            this.benchmarking.push(benchmark);
+            benchmark = { start: Date.now(), title: 'output' }
+        }
 
+        let output;
         switch (this.opts.renderer) {
             case 'svgpath':
-                return this.renderSVGPath();
+                output = this.renderSVGPath();
 
             case 'svg':
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
                 svg.setAttribute('width', this.w);
                 svg.setAttribute('height', this.h);
-                svg.innerHTML = `<path d="${this.renderSVGPath()}"></path>`;
-                return svg;
+                svg.innerHTML = `<g transform="scale(1.9, 1.9)"><path d="${this.renderSVGPath()}"></path></g>`;
+                svg.style.backgroundColor = 'red';
+                output = svg;
         }
+
+        if (benchmark) {
+            benchmark.end = Date.now();
+            this.benchmarking.push(benchmark);
+            this.logPerformance();
+        }
+
+        return output;
     }
 
     renderSVGPath() {
@@ -213,5 +253,20 @@ export default class BaseShapes {
             path.push(this.renderSVGShape(cx, cy, r));
         });
         return path.join('');
+    }
+
+    logPerformance() {
+        let ttltime = 0;
+        this.benchmarking.forEach( task => {
+            const time = task.end - task.start;
+            ttltime += time;
+            console.log(` - ${task.title} : ${time}ms`);
+        });
+        console.log(` Total time: ${ttltime} ms`);
+        this.benchmarking = [];
+    }
+
+    clearBenchmarks() {
+        this.benchmarking = [];
     }
 }

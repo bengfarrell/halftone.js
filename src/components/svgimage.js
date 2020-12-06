@@ -20,7 +20,7 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
             <svg fill="${fill}" style="fill: ${fill}; background-color: ${background}"
                 width="${this.renderer.width}"
                 height="${this.renderer.height}">
-                    <g transform="scale(2, 2)">
+                    <g transform="scale(1.85, 1.85)">
                         <path d="${this.renderer.render()}"></path>
                     </g>
             </svg>`;

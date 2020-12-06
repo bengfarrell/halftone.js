@@ -10,7 +10,7 @@
         } from '../index';
 
         console.log('Available shape types: ', RenderShapeTypes);
-        const htoneRenderer = RendererFactory('circles', { renderer: 'svg' });
+        const htoneRenderer = RendererFactory('circles', { renderer: 'svg', benchmark: true, distanceBetween: 20 });
         htoneRenderer.loadURL('../sampleimages/astronaut.jpg').then( () => {
             document.body.appendChild(htoneRenderer.render());
         });
