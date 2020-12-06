@@ -1,0 +1,11 @@
+{
+  "name": "halftone.js",
+  "version": "1.0.0",
+  "dependencies": {},
+  "devDependencies": {
+    "@web/dev-server": "0.0.25"
+  },
+  "scripts": {
+    "demo": "./node_modules/.bin/web-dev-server --node-resolve --open=./demo/basicusage.html --watch"
+  }
+}
