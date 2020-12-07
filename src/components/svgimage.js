@@ -13,10 +13,11 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
     }
 
     render() {
-        const fill = this.hasAttribute('fillcolor') ? this.getAttribute('fillcolor') : 'black';
-        const background = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
+        if (this.renderer) {
+            const fill = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
+            const background = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
 
-        this.domRoot.innerHTML = `
+            this.domRoot.innerHTML = `
             <svg fill="${fill}" style="fill: ${fill}; background-color: ${background}"
                 width="${this.renderer.width}"
                 height="${this.renderer.height}">
@@ -24,6 +25,7 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
                         <path d="${this.renderer.render()}"></path>
                     </g>
             </svg>`;
+        }
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -37,7 +39,7 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
                 break;
             }
 
-            case 'fillcolor': {
+            case 'shapecolor': {
                 const svg = this.domRoot.querySelector('svg');
                 if (svg) {
                     svg.style.fill = newValue;
@@ -45,6 +47,12 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
                 break;
             }
         }
+    }
+
+    createRendererOptions() {
+        const opts = super.createRendererOptions();
+        opts.renderer = 'svgpath';
+        return opts;
     }
 }
 

@@ -1,5 +1,6 @@
 import BaseShapes from './baseshapes.js';
-import { SQUARE } from './svgshapefactory.js';
+import { SQUARE as SVG_SQUARE } from './svgshapefactory.js';
+import {SQUARE as CANVAS_SQUARE} from './bitmapshapefactory.js';
 
 export class AltSquares extends BaseShapes {
     static get ShapeName() { return 'altsquares'; }
@@ -31,12 +32,22 @@ export class AltSquares extends BaseShapes {
     }
 
     /**
+     * render bitmap shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderBitmapShape(cx, cy, r) {
+        CANVAS_SQUARE(this.outputCanvasContext, cx, cy, r);
+    }
+
+    /**
      * render SVG shape
      * @param cx
      * @param cy
      * @param r
      */
     renderSVGShape(cx, cy, r) {
-        return SQUARE(cx, cy, r);
+        return SVG_SQUARE(cx, cy, r);
     }
 }

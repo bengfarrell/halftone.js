@@ -6,6 +6,6 @@
     "@web/dev-server": "0.0.25"
   },
   "scripts": {
-    "demo": "./node_modules/.bin/web-dev-server --node-resolve --open=./demo/basicusage.html --watch"
+    "demo": "./node_modules/.bin/web-dev-server --node-resolve --open=./demo/index.html --watch"
   }
 }

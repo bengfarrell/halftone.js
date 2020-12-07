@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <script src="../src/components/svgimage.js" type="module"></script>
     <script type="module">
-        import { HalftoneSVGImage } from '../src/components/svgimage';
+        import { HalftoneBitmapImage } from '../src/components/bitmapimage';
 
         const dropdown = document.getElementById('shaperenderers');
-        dropdown.innerHTML = HalftoneSVGImage.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
+        dropdown.innerHTML = HalftoneBitmapImage.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
     </script>
     <script>
         function changeShape(event) {
-            document.querySelector('halftone-svg-image').setAttribute('shapetype', event.target.value);
+            document.querySelector('halftone-bitmap-image').setAttribute('shapetype', event.target.value);
 
             if (event.target.value === 'crosses') {
                 document.getElementById('crosssize-container').style.display = 'block';
@@ -21,22 +21,22 @@
         }
 
         function changeDistance(event) {
-            document.querySelector('halftone-svg-image').setAttribute('distance', event.target.value);
+            document.querySelector('halftone-bitmap-image').setAttribute('distance', event.target.value);
         }
 
         function changeCrossSize(event) {
-            document.querySelector('halftone-svg-image').setAttribute('crossbarlength', event.target.value);
+            document.querySelector('halftone-bitmap-image').setAttribute('crossbarlength', event.target.value);
         }
 
         function changeFillColor(event) {
-            document.querySelector('halftone-svg-image').setAttribute('fillcolor', event.target.value);
+            document.querySelector('halftone-bitmap-image').setAttribute('shapecolor', event.target.value);
         }
 
         function changeBackgroundColor(event) {
-            document.querySelector('halftone-svg-image').setAttribute('backgroundcolor', event.target.value);
+            document.querySelector('halftone-bitmap-image').setAttribute('backgroundcolor', event.target.value);
         }
     </script>
-    <title>Halftone SVG Image</title>
+    <title>Halftone Bitmap Image</title>
 </head>
 <body>
     <label for="shaperenderers">Choose a shape renderer:</label>
@@ -70,6 +70,6 @@
     <br />
     <br />
 
-    <halftone-svg-image src="../sampleimages/astronaut.jpg" />
+    <halftone-bitmap-image src="../sampleimages/astronaut.jpg" />
 </body>
 </html>

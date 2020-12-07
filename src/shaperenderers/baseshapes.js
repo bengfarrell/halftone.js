@@ -27,9 +27,9 @@ export default class BaseShapes {
 
     /**
      * @param options - optional config options
-     * @param imageobj - optional ImageElement to use when not wanting to load by URL
+     * @param inputimage - optional ImageElement to use when not wanting to load by URL
      */
-    constructor(options, imageobj) {
+    constructor(options, inputimage) {
         /**
          * dots array
          */
@@ -43,7 +43,17 @@ export default class BaseShapes {
         /**
          * input image
          */
-        this.inputSource = imageobj;
+        this.inputSource = inputimage;
+
+        /**
+         * output canvas (if canvas/bitmap rendering)
+         */
+        this.outputCanvas = options.outputCanvas ? options.outputCanvas : undefined;
+
+        /**
+         * output canvas context
+         */
+        this.outputCanvasContext = undefined;
 
         /**
          * input image data
@@ -120,6 +130,14 @@ export default class BaseShapes {
     renderSVGShape(cx, cy, r) {}
 
     /**
+     * render bitmap shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderBitmapShape(cx, cy, r) {}
+
+    /**
      * organize pixels into buckets
      * @param x
      * @param y
@@ -161,6 +179,15 @@ export default class BaseShapes {
 
         this.width = this.inputSource.width;
         this.height = this.inputSource.height;
+
+        if (this.opts.renderer === 'canvas') {
+            if (!this.outputCanvas) {
+                this.outputCanvas = document.createElement('canvas');
+            }
+            this.outputCanvas.width = this.w;
+            this.outputCanvas.height = this.h;
+            this.outputCanvasContext = this.outputCanvas.getContext('2d');
+        }
 
         if (benchmark) {
             benchmark.end = Date.now();
@@ -220,14 +247,21 @@ export default class BaseShapes {
         switch (this.opts.renderer) {
             case 'svgpath':
                 output = this.renderSVGPath();
+                break;
 
             case 'svg':
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
                 svg.setAttribute('width', this.w);
                 svg.setAttribute('height', this.h);
                 svg.innerHTML = `<g transform="scale(1.9, 1.9)"><path d="${this.renderSVGPath()}"></path></g>`;
-                svg.style.backgroundColor = 'red';
                 output = svg;
+                break;
+
+            case 'canvas':
+                this.renderBitmap();
+                output = this.outputCanvas;
+                break;
+
         }
 
         if (benchmark) {
@@ -253,6 +287,20 @@ export default class BaseShapes {
             path.push(this.renderSVGShape(cx, cy, r));
         });
         return path.join('');
+    }
+
+    renderBitmap() {
+        this.dots.forEach(dot => {
+            if (!dot.v) {
+                return;
+            }
+            const wantRate = Mean(dot.v) / 255;
+            let r = this.calculateR(wantRate);
+            const cx = dot.x * this.scale;
+            const cy = dot.y * this.scale;
+            r = Round(r * this.scale);
+            this.renderBitmapShape(cx, cy, r);
+        });
     }
 
     logPerformance() {

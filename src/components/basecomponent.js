@@ -3,7 +3,7 @@ import { RendererFactory, RenderShapeTypes } from '../rendererfactory.js';
 export class BaseHalftoneElement extends HTMLElement {
     static get RenderShapeTypes() { return RenderShapeTypes }
 
-    static get observedAttributes() { return [ 'shapetype', 'distance', 'crossbarlength', 'fillcolor', 'backgroundcolor' ]; }
+    static get observedAttributes() { return [ 'shapetype', 'distance', 'crossbarlength', 'shapecolor', 'backgroundcolor' ]; }
 
     set distanceBetween(val) {
         if (this.renderer) {
@@ -48,14 +48,26 @@ export class BaseHalftoneElement extends HTMLElement {
         }
     }
 
-    render() {}
+    render() {
+        if (this.renderer) {
+            this.renderer.render();
+        }
+    }
 
-    createRenderer(input) {
+    createRendererOptions() {
         const opts = {};
         if (this.hasAttribute('distance')) {
             opts.distanceBetween = Number(this.getAttribute('distance'));
         }
+        return opts;
+    }
+
+    createRenderer(input) {
+        const opts = { renderer: this.constructor.rendererType };
+        if (this.hasAttribute('distance')) {
+            opts.distanceBetween = Number(this.getAttribute('distance'));
+        }
         const type = this.hasAttribute('shapetype') ? this.getAttribute('shapetype') : 'circles';
-        this.renderer = RendererFactory(type, opts, input);
+        this.renderer = RendererFactory(type, this.createRendererOptions(), input);
     }
 }

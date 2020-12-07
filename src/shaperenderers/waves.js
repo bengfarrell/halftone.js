@@ -1,6 +1,7 @@
 import BaseShapes from './baseshapes.js';
 import { SquareRootOfTwo } from '../math.js';
-import { CIRCLE } from './svgshapefactory.js';
+import { CIRCLE as SVG_CIRCLE } from './svgshapefactory.js';
+import { CIRCLE as CANVAS_CIRCLE } from './bitmapshapefactory.js';
 
 export class Waves extends BaseShapes {
     static get ShapeName() { return 'waves'; }
@@ -39,6 +40,16 @@ export class Waves extends BaseShapes {
      * @param r
      */
     renderSVGShape(cx, cy, r) {
-        return CIRCLE(cx, cy, r);
+        return SVG_CIRCLE(cx, cy, r);
+    }
+
+    /**
+     * render bitmap shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderBitmapShape(cx, cy, r) {
+        CANVAS_CIRCLE(this.outputCanvasContext, cx, cy, r);
     }
 }

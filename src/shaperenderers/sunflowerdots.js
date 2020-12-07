@@ -1,6 +1,7 @@
 import BaseShapes from './baseshapes.js';
 import { SquareRootOfThree } from '../math.js';
-import { CIRCLE } from './svgshapefactory.js';
+import { CIRCLE as SVG_CIRCLE } from './svgshapefactory.js';
+import { CIRCLE as CANVAS_CIRCLE } from './bitmapshapefactory.js';
 
 export class SunflowerDots extends BaseShapes {
     static get ShapeName() { return 'sunflowerdots'; }
@@ -52,6 +53,16 @@ export class SunflowerDots extends BaseShapes {
      * @param r
      */
     renderSVGShape(cx, cy, r) {
-        return CIRCLE(cx, cy, r);
+        return SVG_CIRCLE(cx, cy, r);
+    }
+
+    /**
+     * render bitmap shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderBitmapShape(cx, cy, r) {
+        CANVAS_CIRCLE(this.outputCanvasContext, cx, cy, r);
     }
 }
