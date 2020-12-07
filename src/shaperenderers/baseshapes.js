@@ -48,7 +48,17 @@ export default class BaseShapes {
         /**
          * output canvas (if canvas/bitmap rendering)
          */
-        this.outputCanvas = options.outputCanvas ? options.outputCanvas : undefined;
+        this.outputCanvas = options.outputCanvas ? options.outputCanvas : undefined
+
+        /**
+         * buffer canvas for retrieving image data
+         */
+        this.buffer = document.createElement('canvas');
+
+        /**
+         * buffer canvas context for retrieving image data
+         */
+        this.bufferContext = undefined;
 
         /**
          * output canvas context
@@ -170,12 +180,11 @@ export default class BaseShapes {
         this.H = Math.round(this.h / this.div / this.scale);
         this.A = this.opts.distanceBetween / this.scale;
 
-        const c = document.createElement('canvas');
-        c.width = this.W;
-        c.height = this.H;
-        const ctx = c.getContext('2d');
-        ctx.drawImage(this.inputSource, 0, 0, this.W, this.H);
-        this.inputData = ctx.getImageData(0, 0, this.W, this.H).data;
+        this.buffer.width = this.W;
+        this.buffer.height = this.H;
+        this.bufferContext = this.buffer.getContext('2d');
+        this.bufferContext.drawImage(this.inputSource, 0, 0, this.W, this.H);
+        this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
 
         this.width = this.inputSource.width;
         this.height = this.inputSource.height;
@@ -202,7 +211,17 @@ export default class BaseShapes {
         }
     }
 
-    render() {
+    render(refreshImage = false) {
+        if (refreshImage) {
+            // re-read image source without having to do initialization work or resize
+            // intended for video sources where nothing changes except the image in the frame
+            this.dots = [];
+            this.buckets = [];
+            this.bufferContext.drawImage(this.inputSource, 0, 0, this.W, this.H);
+            this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
+            this.processPixels();
+        }
+
         let benchmark;
         if (this.opts.benchmark) {
             benchmark = { start: Date.now(), title: 'render' };
