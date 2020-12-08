@@ -10,7 +10,7 @@
 
         console.log('Available shape types: ', Halftone.RenderShapeTypes);
         const htoneRenderer = Halftone.RendererFactory('circles', { renderer: 'svg', benchmark: true, distanceBetween: 20 });
-        htoneRenderer.loadURL('../sampleimages/astronaut.jpg').then( () => {
+        htoneRenderer.loadURL('./sampleimages/astronaut.jpg').then( () => {
             document.body.appendChild(htoneRenderer.render());
         });
 
