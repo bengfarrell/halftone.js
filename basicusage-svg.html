@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Basics</title>
+
+    <script type="module">
+        // import * as Halftone from ../index.js';
+        import * as Halftone from './halftone.js';
+
+        console.log('Available shape types: ', Halftone.RenderShapeTypes);
+        const htoneRenderer = Halftone.RendererFactory('circles', { renderer: 'svg', benchmark: true, distanceBetween: 20 });
+        htoneRenderer.loadURL('../sampleimages/astronaut.jpg').then( () => {
+            document.body.appendChild(htoneRenderer.render());
+        });
+
+    </script>
+</head>
+<body>
+</body>
+</html>
