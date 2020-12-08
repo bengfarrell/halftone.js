@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script src="../src/components/bitmapcamera.js" type="module"></script>
     <script type="module">
-        import { HalftoneBitmapCamera } from '../src/components/bitmapcamera';
+        // import * as Halftone from ../index.js';
+        import * as Halftone from './halftone.js';
 
         const dropdown = document.getElementById('shaperenderers');
-        dropdown.innerHTML = HalftoneBitmapCamera.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
+        dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
     </script>
     <script>
         function changeShape(event) {

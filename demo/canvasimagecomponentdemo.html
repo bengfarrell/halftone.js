@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script src="../src/components/svgimage.js" type="module"></script>
+
     <script type="module">
-        import { HalftoneBitmapImage } from '../src/components/bitmapimage';
+        // import * as Halftone from ../index.js';
+        import * as Halftone from './halftone.js';
 
         const dropdown = document.getElementById('shaperenderers');
-        dropdown.innerHTML = HalftoneBitmapImage.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
+        dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
     </script>
     <script>
         function changeShape(event) {
@@ -70,6 +71,6 @@
     <br />
     <br />
 
-    <halftone-bitmap-image src="../sampleimages/astronaut.jpg" />
+    <halftone-bitmap-image src="./sampleimages/astronaut.jpg" />
 </body>
 </html>
