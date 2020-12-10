@@ -32,8 +32,10 @@ export class BaseHalftoneElement extends HTMLElement {
     attributeChangedCallback(name, oldValue, newValue) {
         switch (name) {
             case 'shapetype':
-                this.createRenderer(this.renderer.inputSource);
-                this.render();
+                if (this.renderer.rendererType !== newValue) {
+                    this.createRenderer(this.renderer.inputSource);
+                    this.render();
+                }
                 return;
             case 'distance':
                 this.renderer.distanceBetween = newValue;

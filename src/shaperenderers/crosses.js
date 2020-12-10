@@ -1,5 +1,7 @@
-import BaseShapes from './baseshapes.js';
-import {Round} from '../math.js';
+import BaseShapes from './baseshapes';
+import { Round } from '../math';
+import { CROSS as SVG_CROSS } from './svgshapefactory';
+import { CROSS as CANVAS_CROSS } from './bitmapshapefactory';
 
 export class Crosses extends BaseShapes {
     static get ShapeName() { return 'crosses'; }
@@ -61,6 +63,19 @@ export class Crosses extends BaseShapes {
     }
 
     /**
+     * render bitmap shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderBitmapShape(cx, cy, r) {
+        const a = Round(this.A * this.scale);
+        const c = Round(this.cbarLength * this.scale);
+        const b = (r * (a - c)) / a + (c - r) / 2;
+        CANVAS_CROSS(this.outputCanvasContext, cx, cy, r, b);
+    }
+
+    /**
      * render SVG shape
      * @param cx
      * @param cy
@@ -70,8 +85,6 @@ export class Crosses extends BaseShapes {
         const a = Round(this.A * this.scale);
         const c = Round(this.cbarLength * this.scale);
         const b = (r * (a - c)) / a + (c - r) / 2;
-        return `M${cx - r / 2},${cy -
-            b -
-            r / 2}h${r}v${b}h${b}v${r}h${-b}v${b}h${-r}v${-b}h${-b}v${-r}h${b}z`
+        return SVG_CROSS(cx, cy, r, b);
     }
 }

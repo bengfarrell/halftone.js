@@ -1,6 +1,6 @@
-import BaseShapes from './baseshapes.js';
-import { SQUARE as SVG_SQUARE } from './svgshapefactory.js';
-import {SQUARE as CANVAS_SQUARE} from './bitmapshapefactory.js';
+import BaseShapes from './baseshapes';
+import { SQUARE as SVG_SQUARE } from './svgshapefactory';
+import {SQUARE as CANVAS_SQUARE} from './bitmapshapefactory';
 
 export class Squares extends BaseShapes {
     static get ShapeName() { return 'squares'; }

@@ -56,7 +56,7 @@ var Halftone = (function (exports) {
             /**
              * input image
              */
-            this.inputSource = inputimage;
+            this.inputSource = undefined;
 
             /**
              * output canvas (if canvas/bitmap rendering)
@@ -112,10 +112,27 @@ var Halftone = (function (exports) {
                 this.opts.renderer = BaseShapes.DEFAULT_RENDERER;
             }
 
-            if (this.inputSource) {
-                this.init();
+            // Any extra constructor setup from derived classes
+            this.preInit();
+
+            if (inputimage) {
+                this.input = inputimage;
             }
         }
+
+        get isSourceReady() {
+            if (!this.width) {
+                return false;
+            }
+
+            if (!this.height) {
+                return false;
+            }
+
+            return this.inputSource.complete;
+        }
+
+        preInit() {}
 
         /**
          * load image by URL
@@ -124,14 +141,29 @@ var Halftone = (function (exports) {
          */
         async loadURL(url) {
             return new Promise( (resolve, reject) => {
-                this.inputSource = new Image();
-                this.inputSource.addEventListener('load', e => {
-                    this.init();
+                const image = new Image();
+                image.addEventListener('load', e => {
+                    this.input = image;
                     resolve();
                 });
-                this.inputSource.src = url;
+                image.src = url;
             });
         }
+
+        /**
+         * set input image directly
+         * @param src
+         */
+        set input(src) {
+            this.inputSource = src;
+            this.width = this.inputSource.width;
+            this.height = this.inputSource.height;
+
+            if (this.isSourceReady) {
+                this.init();
+            }
+        }
+
 
         /**
          * process pixels from image
@@ -198,9 +230,6 @@ var Halftone = (function (exports) {
             this.bufferContext = this.buffer.getContext('2d');
             this.bufferContext.drawImage(this.inputSource, 0, 0, this.W, this.H);
             this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
-
-            this.width = this.inputSource.width;
-            this.height = this.inputSource.height;
 
             if (this.opts.renderer === 'canvas') {
                 if (!this.outputCanvas) {
@@ -351,6 +380,194 @@ var Halftone = (function (exports) {
         }
     }
 
+    // Bitmap Square Primitive
+
+    const SQUARE = (ctx, cx, cy, r) => {
+        ctx.beginPath();
+        ctx.rect(cx - r / 2, cy  - r / 2, r , r );
+        ctx.fill();
+    };
+
+    // Bitmap Circle Primitive
+    const CIRCLE = (ctx, cx, cy, r) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fill();
+    };
+
+    // Bitmap Triangle Primitive
+    const TRIANGLE = (ctx, cx, cy, r, flipped) => {
+        const aa = (r / 3) * 2;
+        ctx.beginPath();
+
+        let startX = cx;
+        let startY = cy + flipped * aa;
+        let currX = startX;
+        let currY = startY;
+        ctx.moveTo(currX, currY);
+
+        currX += (-aa * SquareRootOfThree) / 2;
+        currY += (flipped * -aa / 2) * 3;
+        ctx.lineTo(currX, currY);
+
+        currX += aa * SquareRootOfThree;
+        ctx.lineTo(currX, currY);
+        ctx.lineTo(startX, startY);
+        ctx.fill();
+    };
+
+    // Bitmap Diamond Primitive
+    const DIAMOND = (ctx, cx, cy, r) => {
+        const r2 = r /= SquareRootOfTwo;
+        ctx.beginPath();
+
+        let startX = cx;
+        let startY = cy - r2 / 2;
+        let currX = startX;
+        let currY = startY;
+        ctx.moveTo(currX, currY);
+
+        currX += r2;
+        currY += r2;
+        ctx.lineTo(currX, currY);
+
+        currX += -r2;
+        currY += r2;
+        ctx.lineTo(currX, currY);
+
+        currX += -r2;
+        currY += -r2;
+        ctx.lineTo(currX, currY);
+
+        ctx.lineTo(startX, startY);
+        ctx.fill();
+    };
+
+    // Bitmap Hexagon Primitive
+    const HEXAGON = (ctx, cx, cy, r) => {
+        const r2 = r / 2;
+        const r23 = r2 * SquareRootOfThree;
+        ctx.beginPath();
+
+        let startX = cx;
+        let startY = cy - r;
+        let currX = startX;
+        let currY = startY;
+        ctx.moveTo(currX, currY);
+
+        currX += r23;
+        currY += r2;
+        ctx.lineTo(currX, currY);
+
+        currY += r;
+        ctx.lineTo(currX, currY);
+
+        currX += -r23;
+        currY += r2;
+        ctx.lineTo(currX, currY);
+
+        currX += -r23;
+        currY += -r2;
+        ctx.lineTo(currX, currY);
+
+        currY += -r;
+        ctx.lineTo(currX, currY);
+
+        ctx.lineTo(startX, startY);
+        ctx.fill();
+    };
+
+    // Bitmap Cross Primitive
+    const CROSS = (ctx, cx, cy, r, b) => {
+        ctx.beginPath();
+
+        let startX = cx - r / 2;
+        let startY = cy - b - r / 2;
+        let currX = startX;
+        let currY = startY;
+        ctx.moveTo(currX, currY);
+
+        currX += r;
+        ctx.lineTo(currX, currY);
+
+        currY += b;
+        ctx.lineTo(currX, currY);
+
+        currX += b;
+        ctx.lineTo(currX, currY);
+
+        currY += r;
+        ctx.lineTo(currX, currY);
+
+        currX += -b;
+        ctx.lineTo(currX, currY);
+
+        currY += b;
+        ctx.lineTo(currX, currY);
+
+        currX += -r;
+        ctx.lineTo(currX, currY);
+
+        currY += -b;
+        ctx.lineTo(currX, currY);
+
+        currX += -b;
+        ctx.lineTo(currX, currY);
+
+        currY += -r;
+        ctx.lineTo(currX, currY);
+
+        currX += b;
+        ctx.lineTo(currX, currY);
+
+        ctx.lineTo(startX, startY);
+        ctx.fill();
+    };
+
+    // SVG Square Primitive
+    const SQUARE$1 = (cx, cy, r) => {
+        return `M${cx - r / 2},${cy - r / 2}h${r}v${r}h${-r}z`;
+    };
+
+    // SVG Circle Primitive
+    const CIRCLE$1 = (cx, cy, r) => {
+        return `M${Round(cx)},${Round(cy - r)}a${[r, r, 0, 0, 1, 0, 2 * r]}a${[
+        r,
+        r,
+        0,
+        0,
+        1,
+        0,
+        -2 * r
+    ]}z`
+    };
+
+    // SVG Triangle Primitive
+    const TRIANGLE$1 = (cx, cy, r, flipped) => {
+        const aa = (r / 3) * 2;
+        return `M${cx},${cy + flipped * aa}l${(-aa * SquareRootOfThree) / 2},${(flipped * -aa / 2) * 3}h${aa * SquareRootOfThree}z`;
+    };
+
+    // SVG Diamond Primitive
+    const DIAMOND$1 = (cx, cy, r) => {
+        const r2 = r /= SquareRootOfTwo;
+        return `M${cx},${cy - r2 / 2}l${r2},${r2},${-r2},${r2},${-r2},${-r2}z`;
+    };
+
+    // SVG Hexagon Primitive
+    const HEXAGON$1 = (cx, cy, r) => {
+        const r2 = r / 2;
+        const r23 = r2 * SquareRootOfThree;
+        return `M${cx},${cy -
+    r}l${r23},${r2}v${r}l${-r23},${r2},${-r23},${-r2}v${-r}z`;
+    };
+
+    // SVG Cross Primitive
+    const CROSS$1 = (cx, cy, r, b) => {
+        return `M${cx - r / 2},${cy - b -
+    r / 2}h${r}v${b}h${b}v${r}h${-b}v${b}h${-r}v${-b}h${-b}v${-r}h${b}z`
+    };
+
     class Hexagons extends BaseShapes {
         static get ShapeName() { return 'hexagons'; }
 
@@ -381,50 +598,25 @@ var Halftone = (function (exports) {
         }
 
         /**
+         * render bitmap shape
+         * @param cx
+         * @param cy
+         * @param r
+         */
+        renderBitmapShape(cx, cy, r) {
+            HEXAGON(this.outputCanvasContext, cx, cy, r);
+        }
+
+        /**
          * render SVG shape
          * @param cx
          * @param cy
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            const r2 = r / 2;
-            const r23 = r2 * SquareRootOfThree;
-            return `M${cx},${cy -
-        r}l${r23},${r2}v${r}l${-r23},${r2},${-r23},${-r2}v${-r}z`;
+            return HEXAGON$1(cx, cy, r);
         }
     }
-
-    // SVG Square Primitive
-    const SQUARE = (cx, cy, r) => {
-        return `M${cx - r / 2},${cy - r / 2}h${r}v${r}h${-r}z`;
-    };
-
-    // SVG Circle Primitive
-    const CIRCLE = (cx, cy, r) => {
-        return `M${Round(cx)},${Round(cy - r)}a${[r, r, 0, 0, 1, 0, 2 * r]}a${[
-        r,
-        r,
-        0,
-        0,
-        1,
-        0,
-        -2 * r
-    ]}z`
-    };
-
-    // Bitmap Square Primitive
-    const SQUARE$1 = (ctx, cx, cy, r) => {
-        ctx.beginPath();
-        ctx.rect(cx - r / 2, cy  - r / 2, r , r );
-        ctx.fill();
-    };
-
-    // Bitmap Circle Primitive
-    const CIRCLE$1 = (ctx, cx, cy, r) => {
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.fill();
-    };
 
     class Circles extends BaseShapes {
         static get ShapeName() { return 'circles'; }
@@ -467,7 +659,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            return CIRCLE(cx, cy, r);
+            return CIRCLE$1(cx, cy, r);
         }
 
         /**
@@ -477,7 +669,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderBitmapShape(cx, cy, r) {
-            CIRCLE$1(this.outputCanvasContext, cx, cy, r);
+            CIRCLE(this.outputCanvasContext, cx, cy, r);
         }
     }
 
@@ -531,7 +723,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            return CIRCLE(cx, cy, r);
+            return CIRCLE$1(cx, cy, r);
         }
 
         /**
@@ -541,7 +733,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderBitmapShape(cx, cy, r) {
-            CIRCLE$1(this.outputCanvasContext, cx, cy, r);
+            CIRCLE(this.outputCanvasContext, cx, cy, r);
         }
     }
 
@@ -595,7 +787,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            return CIRCLE(cx, cy, r);
+            return CIRCLE$1(cx, cy, r);
         }
 
         /**
@@ -605,7 +797,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderBitmapShape(cx, cy, r) {
-            CIRCLE$1(this.outputCanvasContext, cx, cy, r);
+            CIRCLE(this.outputCanvasContext, cx, cy, r);
         }
     }
 
@@ -646,7 +838,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            return CIRCLE(cx, cy, r);
+            return CIRCLE$1(cx, cy, r);
         }
 
         /**
@@ -656,7 +848,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderBitmapShape(cx, cy, r) {
-            CIRCLE$1(this.outputCanvasContext, cx, cy, r);
+            CIRCLE(this.outputCanvasContext, cx, cy, r);
         }
     }
 
@@ -694,7 +886,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderBitmapShape(cx, cy, r) {
-            SQUARE$1(this.outputCanvasContext, cx, cy, r);
+            SQUARE(this.outputCanvasContext, cx, cy, r);
         }
 
         /**
@@ -704,7 +896,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            return SQUARE(cx, cy, r);
+            return SQUARE$1(cx, cy, r);
         }
     }
 
@@ -768,6 +960,19 @@ var Halftone = (function (exports) {
         }
 
         /**
+         * render bitmap shape
+         * @param cx
+         * @param cy
+         * @param r
+         */
+        renderBitmapShape(cx, cy, r) {
+            const a = Round(this.A * this.scale);
+            const c = Round(this.cbarLength * this.scale);
+            const b = (r * (a - c)) / a + (c - r) / 2;
+            CROSS(this.outputCanvasContext, cx, cy, r, b);
+        }
+
+        /**
          * render SVG shape
          * @param cx
          * @param cy
@@ -777,28 +982,28 @@ var Halftone = (function (exports) {
             const a = Round(this.A * this.scale);
             const c = Round(this.cbarLength * this.scale);
             const b = (r * (a - c)) / a + (c - r) / 2;
-            return `M${cx - r / 2},${cy -
-            b -
-            r / 2}h${r}v${b}h${b}v${r}h${-b}v${b}h${-r}v${-b}h${-b}v${-r}h${b}z`
+            return CROSS$1(cx, cy, r, b);
         }
     }
 
     class Triangles extends BaseShapes {
         static get ShapeName() { return 'triangles'; }
 
-        constructor(opts) {
-            super(opts);
+        preInit() {
             this.processRow = true;
             this.processCol = true;
             this.outputRow = -1;
             this.outputCol = -1;
         }
+
         /**
          * process pixels from image
          */
         processPixels() {
             let x = 0;
             let y = 0;
+            this.processRow = true;
+            this.processCol = true;
             let Y = y;
             while (y < this.H) {
                 this.pushToBucket(x, y);
@@ -830,16 +1035,37 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
+            return this.renderCommonShape('svg', cx, cy, r);
+        }
+
+        /**
+         * render bitmap shape
+         * @param cx
+         * @param cy
+         * @param r
+         */
+        renderBitmapShape(cx, cy, r) {
+            this.renderCommonShape('bitmap', cx, cy, r);
+        }
+
+        renderCommonShape(type, cx, cy, r) {
             if (!cx) {
                 this.outputRow++;
                 this.outputCol = -1;
             }
-            const aa = (r / 3) * 2;
             this.outputCol ++;
             if ((this.outputCol + this.outputRow) % 2) {
-                return `M${cx},${cy + aa}l${(-aa * SquareRootOfThree) / 2},${(-aa / 2) * 3}h${aa * SquareRootOfThree}z`;
+                if (type === 'svg') {
+                    return TRIANGLE$1(cx, cy, r, 1);
+                } else {
+                    TRIANGLE(this.outputCanvasContext, cx, cy, r, 1);
+                }
             } else {
-                return `M${cx},${cy - aa}l${(-aa * SquareRootOfThree) / 2},${(aa / 2) * 3}h${aa * SquareRootOfThree}z`;
+                if (type === 'svg') {
+                    return TRIANGLE$1(cx, cy, r, -1);
+                } else {
+                    TRIANGLE(this.outputCanvasContext, cx, cy, r, -1);
+                }
             }
         }
     }
@@ -847,13 +1073,13 @@ var Halftone = (function (exports) {
     class AltTriangles extends BaseShapes {
         static get ShapeName() { return 'alttriangles'; }
 
-        constructor(opts) {
-            super(opts);
+        preInit() {
             this.processRow = true;
             this.processCol = true;
             this.outputRow = -1;
             this.outputCol = -1;
         }
+
         /**
          * process pixels from image
          */
@@ -891,16 +1117,43 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
+            return this.renderCommonShape('svg', cx, cy, r);
+        }
+
+        /**
+         * render bitmap shape
+         * @param cx
+         * @param cy
+         * @param r
+         */
+        renderBitmapShape(cx, cy, r) {
+            this.renderCommonShape('bitmap', cx, cy, r);
+        }
+
+        /**
+         * render SVG shape
+         * @param cx
+         * @param cy
+         * @param r
+         */
+        renderCommonShape(type, cx, cy, r) {
             if (!cx) {
                 this.outputRow++;
                 this.outputCol = -1;
             }
-            const aa = (r / 3) * 2;
-            this.outputCol ++;
-            if ((this.outputCol) % 2) {
-                return `M${cx},${cy + aa}l${(-aa * SquareRootOfThree) / 2},${(-aa / 2) * 3}h${aa * SquareRootOfThree}z`;
+            this.outputCol++;
+            if (this.outputCol % 2) {
+                if (type === 'svg') {
+                    return TRIANGLE$1(cx, cy, r, 1);
+                } else {
+                    TRIANGLE(this.outputCanvasContext, cx, cy, r, 1);
+                }
             } else {
-                return `M${cx},${cy - aa}l${(-aa * SquareRootOfThree) / 2},${(aa / 2) * 3}h${aa * SquareRootOfThree}z`;
+                if (type === 'svg') {
+                    return TRIANGLE$1(cx, cy, r, -1);
+                } else {
+                    TRIANGLE(this.outputCanvasContext, cx, cy, r, -1);
+                }
             }
         }
     }
@@ -941,8 +1194,17 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            r /= SquareRootOfTwo;
-            return `M${cx},${cy - r / 2}l${r},${r},${-r},${r},${-r},${-r}z`;
+            return DIAMOND$1(cx, cy, r);
+        }
+
+        /**
+         * render bitmap shape
+         * @param cx
+         * @param cy
+         * @param r
+         */
+        renderBitmapShape(cx, cy, r) {
+            DIAMOND(this.outputCanvasContext, cx, cy, r);
         }
     }
 
@@ -983,7 +1245,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            return CIRCLE(cx, cy, r);
+            return CIRCLE$1(cx, cy, r);
         }
 
         /**
@@ -993,7 +1255,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderBitmapShape(cx, cy, r) {
-            CIRCLE$1(this.outputCanvasContext, cx, cy, r);
+            CIRCLE(this.outputCanvasContext, cx, cy, r);
         }
     }
 
@@ -1033,7 +1295,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderBitmapShape(cx, cy, r) {
-            SQUARE$1(this.outputCanvasContext, cx, cy, r);
+            SQUARE(this.outputCanvasContext, cx, cy, r);
         }
 
         /**
@@ -1043,7 +1305,7 @@ var Halftone = (function (exports) {
          * @param r
          */
         renderSVGShape(cx, cy, r) {
-            return SQUARE(cx, cy, r);
+            return SQUARE$1(cx, cy, r);
         }
     }
 
@@ -1107,8 +1369,10 @@ var Halftone = (function (exports) {
         attributeChangedCallback(name, oldValue, newValue) {
             switch (name) {
                 case 'shapetype':
-                    this.createRenderer(this.renderer.inputSource);
-                    this.render();
+                    if (this.renderer.rendererType !== newValue) {
+                        this.createRenderer(this.renderer.inputSource);
+                        this.render();
+                    }
                     return;
                 case 'distance':
                     this.renderer.distanceBetween = newValue;
@@ -1359,7 +1623,7 @@ var Halftone = (function (exports) {
         }
 
         render() {
-            if (this.renderer) {
+            if (this.renderer && this.renderer.isSourceReady) {
                 const bgColor = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
                 const fillColor = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
                 this.renderer.outputCanvasContext.fillStyle = bgColor;
@@ -1599,10 +1863,9 @@ var Halftone = (function (exports) {
         }
 
         render() {
-            if (this.renderer) {
+            if (this.renderer && this.renderer.isSourceReady) {
                 const fill = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
                 const background = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
-
                 this.domRoot.innerHTML = `
             <svg fill="${fill}" style="fill: ${fill}; background-color: ${background}"
                 width="${this.renderer.width}"

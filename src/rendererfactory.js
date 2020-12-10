@@ -1,4 +1,4 @@
-import * as Shapes from './shaperenderers/index.js'
+import * as Shapes from './shaperenderers/index'
 
 export const RendererFactory = (type, opts, imageobj) => {
     const ctor = Object.entries(Shapes).find( item => {

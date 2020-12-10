@@ -1,5 +1,7 @@
-import BaseShapes from './baseshapes.js';
-import { SquareRootOfThree } from '../math.js';
+import BaseShapes from './baseshapes';
+import { SquareRootOfThree } from '../math';
+import { HEXAGON as CANVAS_HEXAGON } from './bitmapshapefactory';
+import { HEXAGON as SVG_HEXAGON } from './svgshapefactory';
 
 export class Hexagons extends BaseShapes {
     static get ShapeName() { return 'hexagons'; }
@@ -31,15 +33,22 @@ export class Hexagons extends BaseShapes {
     }
 
     /**
+     * render bitmap shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderBitmapShape(cx, cy, r) {
+        CANVAS_HEXAGON(this.outputCanvasContext, cx, cy, r);
+    }
+
+    /**
      * render SVG shape
      * @param cx
      * @param cy
      * @param r
      */
     renderSVGShape(cx, cy, r) {
-        const r2 = r / 2;
-        const r23 = r2 * SquareRootOfThree;
-        return `M${cx},${cy -
-        r}l${r23},${r2}v${r}l${-r23},${r2},${-r23},${-r2}v${-r}z`;
+        return SVG_HEXAGON(cx, cy, r);
     }
 }

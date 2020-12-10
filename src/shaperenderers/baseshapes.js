@@ -1,4 +1,4 @@
-import {Mean, Round } from '../math.js';
+import {Mean, Round } from '../math';
 
 export default class BaseShapes {
     static get DEFAULT_DISTANCE() { return 7 };
@@ -43,7 +43,7 @@ export default class BaseShapes {
         /**
          * input image
          */
-        this.inputSource = inputimage;
+        this.inputSource = undefined;
 
         /**
          * output canvas (if canvas/bitmap rendering)
@@ -99,10 +99,27 @@ export default class BaseShapes {
             this.opts.renderer = BaseShapes.DEFAULT_RENDERER;
         }
 
-        if (this.inputSource) {
-            this.init();
+        // Any extra constructor setup from derived classes
+        this.preInit();
+
+        if (inputimage) {
+            this.input = inputimage;
         }
     }
+
+    get isSourceReady() {
+        if (!this.width) {
+            return false;
+        }
+
+        if (!this.height) {
+            return false;
+        }
+
+        return this.inputSource.complete;
+    }
+
+    preInit() {}
 
     /**
      * load image by URL
@@ -111,14 +128,29 @@ export default class BaseShapes {
      */
     async loadURL(url) {
         return new Promise( (resolve, reject) => {
-            this.inputSource = new Image();
-            this.inputSource.addEventListener('load', e => {
-                this.init();
+            const image = new Image();
+            image.addEventListener('load', e => {
+                this.input = image;
                 resolve();
             });
-            this.inputSource.src = url;
+            image.src = url;
         });
     }
+
+    /**
+     * set input image directly
+     * @param src
+     */
+    set input(src) {
+        this.inputSource = src;
+        this.width = this.inputSource.width;
+        this.height = this.inputSource.height;
+
+        if (this.isSourceReady) {
+            this.init();
+        }
+    }
+
 
     /**
      * process pixels from image
@@ -185,9 +217,6 @@ export default class BaseShapes {
         this.bufferContext = this.buffer.getContext('2d');
         this.bufferContext.drawImage(this.inputSource, 0, 0, this.W, this.H);
         this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
-
-        this.width = this.inputSource.width;
-        this.height = this.inputSource.height;
 
         if (this.opts.renderer === 'canvas') {
             if (!this.outputCanvas) {

@@ -13,10 +13,9 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
     }
 
     render() {
-        if (this.renderer) {
+        if (this.renderer && this.renderer.isSourceReady) {
             const fill = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
             const background = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
-
             this.domRoot.innerHTML = `
             <svg fill="${fill}" style="fill: ${fill}; background-color: ${background}"
                 width="${this.renderer.width}"

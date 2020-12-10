@@ -1,8 +1,8 @@
-import BaseShapes from './baseshapes.js';
-import { CIRCLE as SVG_CIRCLE } from './svgshapefactory.js';
-import { CIRCLE as CANVAS_CIRCLE } from './bitmapshapefactory.js';
+import BaseShapes from './baseshapes';
+import { CIRCLE as SVG_CIRCLE } from './svgshapefactory';
+import { CIRCLE as CANVAS_CIRCLE } from './bitmapshapefactory';
 
-import {SquareRootOfThree } from '../math.js';
+import {SquareRootOfThree } from '../math';
 
 export class Circles extends BaseShapes {
     static get ShapeName() { return 'circles'; }

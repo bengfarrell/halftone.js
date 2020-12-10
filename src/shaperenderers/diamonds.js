@@ -1,5 +1,7 @@
-import BaseShapes from './baseshapes.js';
-import {SquareRootOfTwo} from '../math.js';
+import BaseShapes from './baseshapes';
+import {SquareRootOfTwo} from '../math';
+import { DIAMOND as SVG_DIAMOND } from './svgshapefactory';
+import { DIAMOND as CANVAS_DIAMOND } from './bitmapshapefactory';
 
 export class Diamonds extends BaseShapes {
     static get ShapeName() { return 'diamonds'; }
@@ -37,7 +39,16 @@ export class Diamonds extends BaseShapes {
      * @param r
      */
     renderSVGShape(cx, cy, r) {
-        r /= SquareRootOfTwo;
-        return `M${cx},${cy - r / 2}l${r},${r},${-r},${r},${-r},${-r}z`;
+        return SVG_DIAMOND(cx, cy, r);
+    }
+
+    /**
+     * render bitmap shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderBitmapShape(cx, cy, r) {
+        CANVAS_DIAMOND(this.outputCanvasContext, cx, cy, r);
     }
 }

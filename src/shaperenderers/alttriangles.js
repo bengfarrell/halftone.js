@@ -1,16 +1,18 @@
-import BaseShapes from './baseshapes.js';
-import {SquareRootOfThree} from '../math.js';
+import BaseShapes from './baseshapes';
+import {SquareRootOfThree} from '../math';
+import {TRIANGLE as SVG_TRIANGLE} from './svgshapefactory';
+import {TRIANGLE as CANVAS_TRIANGLE} from './bitmapshapefactory';
 
 export class AltTriangles extends BaseShapes {
     static get ShapeName() { return 'alttriangles'; }
 
-    constructor(opts) {
-        super(opts);
+    preInit() {
         this.processRow = true;
         this.processCol = true;
         this.outputRow = -1;
         this.outputCol = -1;
     }
+
     /**
      * process pixels from image
      */
@@ -48,16 +50,43 @@ export class AltTriangles extends BaseShapes {
      * @param r
      */
     renderSVGShape(cx, cy, r) {
+        return this.renderCommonShape('svg', cx, cy, r);
+    }
+
+    /**
+     * render bitmap shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderBitmapShape(cx, cy, r) {
+        this.renderCommonShape('bitmap', cx, cy, r);
+    }
+
+    /**
+     * render SVG shape
+     * @param cx
+     * @param cy
+     * @param r
+     */
+    renderCommonShape(type, cx, cy, r) {
         if (!cx) {
             this.outputRow++;
             this.outputCol = -1;
         }
-        const aa = (r / 3) * 2;
-        this.outputCol ++;
-        if ((this.outputCol) % 2) {
-            return `M${cx},${cy + aa}l${(-aa * SquareRootOfThree) / 2},${(-aa / 2) * 3}h${aa * SquareRootOfThree}z`;
+        this.outputCol++;
+        if (this.outputCol % 2) {
+            if (type === 'svg') {
+                return SVG_TRIANGLE(cx, cy, r, 1);
+            } else {
+                CANVAS_TRIANGLE(this.outputCanvasContext, cx, cy, r, 1);
+            }
         } else {
-            return `M${cx},${cy - aa}l${(-aa * SquareRootOfThree) / 2},${(aa / 2) * 3}h${aa * SquareRootOfThree}z`;
+            if (type === 'svg') {
+                return SVG_TRIANGLE(cx, cy, r, -1);
+            } else {
+                CANVAS_TRIANGLE(this.outputCanvasContext, cx, cy, r, -1);
+            }
         }
     }
 }
