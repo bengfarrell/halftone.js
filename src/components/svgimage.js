@@ -1,4 +1,4 @@
-import { BaseHalftoneElement } from './basecomponent.js';
+import { BaseHalftoneElement } from './basecomponent';
 
 export class HalftoneSVGImage extends BaseHalftoneElement {
     constructor() {

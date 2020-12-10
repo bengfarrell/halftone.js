@@ -1,4 +1,4 @@
-import { RendererFactory, RenderShapeTypes } from '../rendererfactory.js';
+import { RendererFactory, RenderShapeTypes } from '../rendererfactory';
 
 export class BaseHalftoneElement extends HTMLElement {
     static get RenderShapeTypes() { return RenderShapeTypes }
