@@ -136,7 +136,7 @@ class BaseShapes {
      * @param url
      * @return {Promise<unknown>}
      */
-    async loadURL(url) {
+    async loadImage(url) {
         return new Promise( (resolve, reject) => {
             const image = new Image();
             image.addEventListener('load', e => {
@@ -1337,7 +1337,15 @@ const RenderShapeTypes = Object.entries(Shapes).map(item => {
 class BaseHalftoneElement extends HTMLElement {
     static get RenderShapeTypes() { return RenderShapeTypes }
 
-    static get observedAttributes() { return [ 'shapetype', 'distance', 'crossbarlength', 'shapecolor', 'backgroundcolor' ]; }
+    static get observedAttributes() { return [
+        'shapetype',
+        'distance',
+        'crossbarlength',
+        'shapecolor',
+        'backgroundcolor',
+        'backgroundimage',
+        'blendmode' ];
+    }
 
     set distanceBetween(val) {
         if (this.renderer) {
@@ -1848,50 +1856,82 @@ if (!customElements.get('halftone-svg-camera')) {
 }
 
 class HalftoneSVGImage extends BaseHalftoneElement {
+
+    static get observedAttributes() {
+        return [...BaseHalftoneElement.observedAttributes, 'src'];
+    }
+
     constructor() {
         super();
+
+        /**
+         * last SVG render
+         */
+        this.cachedSVGPath = undefined;
+
         if (this.getAttribute('src')) {
             this.loadImage(this.getAttribute('src'));
         }
     }
 
     loadImage(uri) {
-        this.renderer.loadURL(uri).then( () => { this.render(); });
+        this.renderer.loadImage(uri).then( () => { this.render(); });
     }
 
-    render() {
+    /**
+     * render
+     * @param dorender - default true, allow not invoking the underlying render function
+     */
+    render(dorender = true) {
         if (this.renderer && this.renderer.isSourceReady) {
-            const fill = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
-            const background = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
-            this.domRoot.innerHTML = `
-            <svg fill="${fill}" style="fill: ${fill}; background-color: ${background}"
-                width="${this.renderer.width}"
-                height="${this.renderer.height}">
-                    <g transform="scale(1.85, 1.85)">
-                        <path d="${this.renderer.render()}"></path>
-                    </g>
-            </svg>`;
+            if (dorender) {
+                this.cachedSVGPath = this.renderer.render();
+            }
+            this.domRoot.innerHTML = this.getSVG();
         }
+    }
+
+    /**
+     * get SVG path data from last render
+     * @return {any}
+     */
+    getSVG() {
+        const fill = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
+        const background = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
+        const blendmode =  this.hasAttribute('blendmode') ? this.getAttribute('blendmode') : 'normal';
+        return `<svg fill="${fill}" style="fill: ${fill}; background-color: ${background}"
+                    width="${this.renderer.width}"
+                    height="${this.renderer.height}">
+            ${ this.hasAttribute('backgroundimage') ? `<image href="${this.getAttribute('backgroundimage')}"/>` : ''}      
+            <g style="mix-blend-mode: ${blendmode}">
+                <path d="${this.cachedSVGPath}"></path>
+            </g>
+        </svg>`;
+    }
+
+    /**
+     * get SVG path data from last render
+     * @return {any}
+     */
+    getSVGPath() {
+        return this.cachedSVGPath;
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
         super.attributeChangedCallback(name, oldValue, newValue);
         switch (name) {
-            case 'backgroundcolor': {
-                const svg = this.domRoot.querySelector('svg');
-                if (svg) {
-                    svg.style.backgroundColor = newValue;
-                }
+            case 'backgroundimage':
+            case 'backgroundcolor':
+            case 'shapecolor':
+            case 'blendmode':
+                this.render(false);
                 break;
-            }
 
-            case 'shapecolor': {
-                const svg = this.domRoot.querySelector('svg');
-                if (svg) {
-                    svg.style.fill = newValue;
+            case 'src':
+                if (this.renderer) {
+                    this.loadImage(newValue);
                 }
                 break;
-            }
         }
     }
 
