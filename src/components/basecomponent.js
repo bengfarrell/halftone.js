@@ -3,7 +3,15 @@ import { RendererFactory, RenderShapeTypes } from '../rendererfactory';
 export class BaseHalftoneElement extends HTMLElement {
     static get RenderShapeTypes() { return RenderShapeTypes }
 
-    static get observedAttributes() { return [ 'shapetype', 'distance', 'crossbarlength', 'shapecolor', 'backgroundcolor' ]; }
+    static get observedAttributes() { return [
+        'shapetype',
+        'distance',
+        'crossbarlength',
+        'shapecolor',
+        'backgroundcolor',
+        'backgroundimage',
+        'blendmode' ];
+    }
 
     set distanceBetween(val) {
         if (this.renderer) {

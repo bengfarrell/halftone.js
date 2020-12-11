@@ -126,7 +126,7 @@ export default class BaseShapes {
      * @param url
      * @return {Promise<unknown>}
      */
-    async loadURL(url) {
+    async loadImage(url) {
         return new Promise( (resolve, reject) => {
             const image = new Image();
             image.addEventListener('load', e => {

@@ -20,6 +20,14 @@
             }
         }
 
+        function downloadSVG() {
+            const dl = document.createElement('a');
+            const data = "data:image/svg+xml," + escape(document.querySelector('halftone-svg-image').getSVG())
+            dl.setAttribute('download', 'halftone.svg');
+            dl.setAttribute('href', data);
+            dl.click();
+        }
+
         function changeDistance(event) {
             document.querySelector('halftone-svg-image').setAttribute('distance', event.target.value);
         }
@@ -35,10 +43,36 @@
         function changeBackgroundColor(event) {
             document.querySelector('halftone-svg-image').setAttribute('backgroundcolor', event.target.value);
         }
+
+        function changeBGImage(event) {
+            document.querySelector('halftone-svg-image').setAttribute('backgroundimage', event.target.value);
+        }
+
+        function uploadBGImage(event) {
+            document.querySelector('halftone-svg-image').setAttribute('backgroundimage', URL.createObjectURL(event.target.files[0]));
+        }
+
+        function changeSrcImage(event) {
+            document.querySelector('halftone-svg-image').setAttribute('src', event.target.value);
+        }
+
+        function uploadSrcImage(event) {
+            document.querySelector('halftone-svg-image').setAttribute('src', URL.createObjectURL(event.target.files[0]));
+        }
+
+
+        function changeBlendMode(event) {
+            document.querySelector('halftone-svg-image').setAttribute('blendmode', event.target.value);
+        }
     </script>
     <title>Halftone SVG Image</title>
 </head>
 <body>
+    <button onclick="downloadSVG()">Download SVG</button>
+
+    <br />
+    <br />
+
     <label for="shaperenderers">Choose a shape renderer:</label>
     <select name="shaperenderers" id="shaperenderers" onchange="changeShape(event)"></select>
 
@@ -61,11 +95,57 @@
 
     </div>
 
-    <label for="fillcolor">Choose a shape color</label>
     <input type="color" name="fillcolor" id="fillcolor" oninput="changeFillColor(event)"></input>
-
-    <label for="backgroundcolor">Choose a background color</label>
+    <label for="fillcolor"> Choose a shape color </label>
     <input type="color" name="backgroundcolor" id="backgroundcolor" value="#ffffff" oninput="changeBackgroundColor(event)"></input>
+    <label for="backgroundcolor"> Choose a background color (not seen if using an image)</label>
+
+    <br />
+    <br />
+
+    <label for="backgroundimage">Choose a background image</label>
+    <select name="backgroundimage" id="backgroundimage" onchange="changeBGImage(event)">
+        <option>none</option>
+        <option>sampleimages/sample-texture-a.jpg</option>
+        <option>sampleimages/sample-texture-b.jpg</option>
+        <option>sampleimages/sample-texture-c.jpg</option>
+        <option>sampleimages/sample-texture-d.jpg</option>
+    </select>
+    <input type="file" id="backgroundimage" onchange="uploadBGImage(event)" name="img" accept="image/*">
+
+    <br />
+    <br />
+
+    <label for="halftoneimage">Choose a halftone image</label>
+    <select name="halftoneimage" id="halftoneimage" onchange="changeSrcImage(event)">
+        <option>sampleimages/astronaut.jpg</option>
+        <option>sampleimages/obama.jpeg</option>
+        <option>sampleimages/thirtyrock.jpeg</option>
+    </select>
+    <input type="file" id="halftoneimage" onchange="uploadSrcImage(event)" name="img" accept="image/*">
+
+    <br />
+    <br />
+
+    <label for="blendmode">Choose a blend mode</label>
+    <select name="blendmode" id="blendmode" onchange="changeBlendMode(event)">
+        <option>normal</option>
+        <option>multiply</option>
+        <option>screen</option>
+        <option>overlay</option>
+        <option>darken</option>
+        <option>lighten</option>
+        <option>color-dodge</option>
+        <option>color-burn</option>
+        <option>hard-light</option>
+        <option>soft-light</option>
+        <option>difference</option>
+        <option>exclusion</option>
+        <option>hue</option>
+        <option>saturation</option>
+        <option>color</option>
+        <option>luminosity</option>
+    </select>
 
     <br />
     <br />
