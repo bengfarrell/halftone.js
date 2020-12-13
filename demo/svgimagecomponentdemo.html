@@ -10,8 +10,8 @@
         }
     </style>
     <script type="module">
-        import * as Halftone from '../index.js';
-        // import * as Halftone from './halftone.js';
+        // import * as Halftone from '../index.js';
+        import * as Halftone from './halftone.js';
 
         const dropdown = document.getElementById('shaperenderers');
         dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
