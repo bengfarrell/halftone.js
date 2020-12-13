@@ -211,6 +211,10 @@ export default class BaseShapes {
         this.W = Math.round(this.w / this.div / this.scale);
         this.H = Math.round(this.h / this.div / this.scale);
         this.A = this.opts.distanceBetween / this.scale;
+        this.aspectRatio = this.width / this.height;
+
+        // how much to scale the output to match the input source
+        this.outputScaling = { x: this.w / ( this.W * this.scale ), y: this.h / ( this.H * this.scale) };
 
         this.buffer.width = this.W;
         this.buffer.height = this.H;
@@ -255,6 +259,7 @@ export default class BaseShapes {
         if (this.opts.benchmark) {
             benchmark = { start: Date.now(), title: 'render' };
         }
+
         for (let y = 0; y < this.H; y++) {
             for (let x = 0; x < this.W; x++) {
                 const i = y * (this.W * 4) + x * 4;
@@ -285,6 +290,7 @@ export default class BaseShapes {
                 theDot.v.push(this.opts.inverse ? green : 255 - green);
             }
         }
+
         if (benchmark) {
             benchmark.end = Date.now();
             this.benchmarking.push(benchmark);
@@ -301,7 +307,7 @@ export default class BaseShapes {
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
                 svg.setAttribute('width', this.w);
                 svg.setAttribute('height', this.h);
-                svg.innerHTML = `<g transform="scale(1.9, 1.9)"><path d="${this.renderSVGPath()}"></path></g>`;
+                svg.innerHTML = `<path d="${this.renderSVGPath()}"></path>`;
                 output = svg;
                 break;
 
@@ -329,9 +335,9 @@ export default class BaseShapes {
             }
             const wantRate = Mean(dot.v) / 255;
             let r = this.calculateR(wantRate);
-            const cx = dot.x * this.scale;
-            const cy = dot.y * this.scale;
-            r = Round(r * this.scale);
+            const cx = dot.x * this.scale * this.outputScaling.x;
+            const cy = dot.y * this.scale * this.outputScaling.y;
+            r = Round(r * this.scale) * this.outputScaling.x;
             path.push(this.renderSVGShape(cx, cy, r));
         });
         return path.join('');
@@ -344,9 +350,9 @@ export default class BaseShapes {
             }
             const wantRate = Mean(dot.v) / 255;
             let r = this.calculateR(wantRate);
-            const cx = dot.x * this.scale;
-            const cy = dot.y * this.scale;
-            r = Round(r * this.scale);
+            const cx = dot.x * this.scale * this.outputScaling.x;
+            const cy = dot.y * this.scale * this.outputScaling.y;
+            r = Round(r * this.scale) * this.outputScaling.x;
             this.renderBitmapShape(cx, cy, r);
         });
     }

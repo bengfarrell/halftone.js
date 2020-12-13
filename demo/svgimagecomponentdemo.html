@@ -2,9 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <style>
+        halftone-svg-image {
+            width: 900px;
+            height: 600px;
+            background-color: #cdcdcd;
+        }
+    </style>
     <script type="module">
-        // import * as Halftone from '../index.js';
-        import * as Halftone from './halftone.js';
+        import * as Halftone from '../index.js';
+        // import * as Halftone from './halftone.js';
 
         const dropdown = document.getElementById('shaperenderers');
         dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
@@ -22,10 +29,20 @@
 
         function downloadSVG() {
             const dl = document.createElement('a');
-            const data = "data:image/svg+xml," + escape(document.querySelector('halftone-svg-image').getSVG())
+            const data = "data:image/svg+xml," + escape(document.querySelector('halftone-svg-image').svg)
             dl.setAttribute('download', 'halftone.svg');
             dl.setAttribute('href', data);
             dl.click();
+        }
+
+        function downloadImage() {
+            const svg = document.querySelector('halftone-svg-image');
+            svg.rasterizeToPNG().then( (pngdata) => {
+                const dl = document.createElement('a');
+                dl.setAttribute('download', 'halftone.png');
+                dl.setAttribute('href', pngdata);
+                dl.click();
+            });
         }
 
         function changeDistance(event) {
@@ -69,6 +86,7 @@
 </head>
 <body>
     <button onclick="downloadSVG()">Download SVG</button>
+    <button onclick="downloadImage()">Download Image</button>
 
     <br />
     <br />
