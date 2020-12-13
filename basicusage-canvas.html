@@ -10,7 +10,7 @@
 
         console.log('Available shape types: ', Halftone.RenderShapeTypes);
         const htoneRenderer = Halftone.RendererFactory('altsquares', { renderer: 'canvas', benchmark: true, distanceBetween: 7 });
-        htoneRenderer.loadURL('./sampleimages/astronaut.jpg').then( () => {
+        htoneRenderer.loadImage('./sampleimages/astronaut.jpg').then( () => {
             document.body.appendChild(htoneRenderer.render());
         });
 
