@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
+    <style>
+        halftone-bitmap-image {
+            width: 900px;
+            height: 600px;
+            background-color: #cdcdcd;
+        }
+    </style>
     <script type="module">
         // import * as Halftone from '../index.js';
         import * as Halftone from './halftone.js';
@@ -10,36 +16,15 @@
         const dropdown = document.getElementById('shaperenderers');
         dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
     </script>
-    <script>
-        function changeShape(event) {
-            document.querySelector('halftone-bitmap-image').setAttribute('shapetype', event.target.value);
-
-            if (event.target.value === 'crosses') {
-                document.getElementById('crosssize-container').style.display = 'block';
-            } else {
-                document.getElementById('crosssize-container').style.display = 'none';
-            }
-        }
-
-        function changeDistance(event) {
-            document.querySelector('halftone-bitmap-image').setAttribute('distance', event.target.value);
-        }
-
-        function changeCrossSize(event) {
-            document.querySelector('halftone-bitmap-image').setAttribute('crossbarlength', event.target.value);
-        }
-
-        function changeFillColor(event) {
-            document.querySelector('halftone-bitmap-image').setAttribute('shapecolor', event.target.value);
-        }
-
-        function changeBackgroundColor(event) {
-            document.querySelector('halftone-bitmap-image').setAttribute('backgroundcolor', event.target.value);
-        }
-    </script>
+    <script src="demo.js"></script>
     <title>Halftone Bitmap Image</title>
 </head>
 <body>
+    <button onclick="downloadImage()">Download Image</button>
+
+    <br />
+    <br />
+
     <label for="shaperenderers">Choose a shape renderer:</label>
     <select name="shaperenderers" id="shaperenderers" onchange="changeShape(event)"></select>
 
@@ -62,15 +47,63 @@
 
     </div>
 
-    <label for="fillcolor">Choose a shape color</label>
     <input type="color" name="fillcolor" id="fillcolor" oninput="changeFillColor(event)"></input>
-
-    <label for="backgroundcolor">Choose a background color</label>
+    <label for="fillcolor"> Choose a shape color </label>
     <input type="color" name="backgroundcolor" id="backgroundcolor" value="#ffffff" oninput="changeBackgroundColor(event)"></input>
+    <label for="backgroundcolor"> Choose a background color (not seen if using an image)</label>
 
     <br />
     <br />
 
-    <halftone-bitmap-image shapetype="altcircles" src="./sampleimages/astronaut.jpg" />
+    <label for="backgroundimage">Choose a background image</label>
+    <select name="backgroundimage" id="backgroundimage" onchange="changeBGImage(event)">
+        <option>none</option>
+        <option>sampleimages/sample-texture-a.jpg</option>
+        <option>sampleimages/sample-texture-b.jpg</option>
+        <option>sampleimages/sample-texture-c.jpg</option>
+        <option>sampleimages/sample-texture-d.jpg</option>
+    </select>
+    <input type="file" id="backgroundimage" onchange="uploadBGImage(event)" name="img" accept="image/*">
+
+    <br />
+    <br />
+
+    <label for="halftoneimage">Choose a halftone image</label>
+    <select name="halftoneimage" id="halftoneimage" onchange="changeSrcImage(event)">
+        <option>sampleimages/astronaut.jpg</option>
+        <option>sampleimages/obama.jpeg</option>
+        <option>sampleimages/thirtyrock.jpeg</option>
+    </select>
+    <input type="file" id="halftoneimage" onchange="uploadSrcImage(event)" name="img" accept="image/*">
+
+    <br />
+    <br />
+
+    <label for="blendmode">Choose a blend mode</label>
+    <select name="blendmode" id="blendmode" onchange="changeBlendMode(event)">
+        <option>normal</option>
+        <option>multiply</option>
+        <option>screen</option>
+        <option>overlay</option>
+        <option>darken</option>
+        <option>lighten</option>
+        <option>color-dodge</option>
+        <option>color-burn</option>
+        <option>hard-light</option>
+        <option>soft-light</option>
+        <option>difference</option>
+        <option>exclusion</option>
+        <option>hue</option>
+        <option>saturation</option>
+        <option>color</option>
+        <option>luminosity</option>
+    </select>
+
+    <br />
+    <br />
+
+    <halftone-bitmap-image id="halftone" shapetype="altcircles" src="./sampleimages/astronaut.jpg">
+        <div id="bgimage" style="width: 100%; height: 100%"></div>
+    </halftone-bitmap-image>
 </body>
 </html>
