@@ -4,12 +4,11 @@ export class BaseHalftoneElement extends HTMLElement {
     static get RenderShapeTypes() { return RenderShapeTypes }
 
     static get observedAttributes() { return [
+        'src',
         'shapetype',
         'distance',
         'crossbarlength',
         'shapecolor',
-        'backgroundcolor',
-        'backgroundimage',
         'blendmode' ];
     }
 
@@ -28,6 +27,8 @@ export class BaseHalftoneElement extends HTMLElement {
         if (!this.hasAttribute('noshadow')) {
             this.domRoot = this.attachShadow( { mode: 'open'});
         }
+        this.style.position = 'relative';
+        this.style.display = 'inline-block';
 
         /**
          * visible area bounding box
@@ -51,17 +52,29 @@ export class BaseHalftoneElement extends HTMLElement {
          */
         this.componentHeight = undefined;
 
+        /**
+         * slot for inserting a background layer sized to the rendered halftone
+         */
+        this.backgroundSlot = undefined;
+
+        this.createBackgroundSlot();
         this.createRenderer();
     }
 
     /**
      * update canvas dimensions when resized
-     * @private
+     * @return modified
      */
     resize() {
         const bounds = this.getBoundingClientRect();
         if (bounds.width === 0 || bounds.height === 0) {
-            return;
+            return false;
+        }
+
+        if (bounds.width === this.componentWidth ||
+            bounds.height === this.componentHeight ||
+            this.sourceAspectRatio === this.renderer.aspectRatio) {
+            return false;
         }
 
         this.componentWidth = bounds.width;
@@ -69,6 +82,7 @@ export class BaseHalftoneElement extends HTMLElement {
         let renderWidth = bounds.width;
         let renderHeight = bounds.height;
         const componentAspectRatio = bounds.width / bounds.height;
+        this.sourceAspectRatio = this.renderer.aspectRatio;
 
         // calculate letterbox borders
         if (componentAspectRatio < this.renderer.aspectRatio) {
@@ -88,13 +102,20 @@ export class BaseHalftoneElement extends HTMLElement {
         this.visibleRect.y = this.letterBoxTop;
         this.visibleRect.width = renderWidth;
         this.visibleRect.height = renderHeight;
-    };
 
+        this.backgroundSlot.style.width = `${this.visibleRect.width}px`;
+        this.backgroundSlot.style.height = `${this.visibleRect.height}px`;
+        this.backgroundSlot.style.top = `${this.visibleRect.y}px`;
+        this.backgroundSlot.style.left = `${this.visibleRect.xt}px`;
+        return true;
+    };
 
     connectedCallback() {
         if (this.hasAttribute('noshadow')) {
             this.domRoot = this;
         }
+
+        this.domRoot.appendChild(this.backgroundSlot);
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -135,5 +156,11 @@ export class BaseHalftoneElement extends HTMLElement {
         }
         const type = this.hasAttribute('shapetype') ? this.getAttribute('shapetype') : 'circles';
         this.renderer = RendererFactory(type, this.createRendererOptions(), input);
+    }
+
+    createBackgroundSlot() {
+        this.backgroundSlot = document.createElement('slot');
+        this.backgroundSlot.style.position = 'absolute';
+        this.backgroundSlot.style.display = 'inline-block';
     }
 }

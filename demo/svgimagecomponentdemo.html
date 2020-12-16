@@ -16,72 +16,7 @@
         const dropdown = document.getElementById('shaperenderers');
         dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
     </script>
-    <script>
-        function changeShape(event) {
-            document.querySelector('halftone-svg-image').setAttribute('shapetype', event.target.value);
-
-            if (event.target.value === 'crosses') {
-                document.getElementById('crosssize-container').style.display = 'block';
-            } else {
-                document.getElementById('crosssize-container').style.display = 'none';
-            }
-        }
-
-        function downloadSVG() {
-            const dl = document.createElement('a');
-            const data = "data:image/svg+xml," + escape(document.querySelector('halftone-svg-image').svg)
-            dl.setAttribute('download', 'halftone.svg');
-            dl.setAttribute('href', data);
-            dl.click();
-        }
-
-        function downloadImage() {
-            const svg = document.querySelector('halftone-svg-image');
-            svg.rasterizeToPNG().then( (pngdata) => {
-                const dl = document.createElement('a');
-                dl.setAttribute('download', 'halftone.png');
-                dl.setAttribute('href', pngdata);
-                dl.click();
-            });
-        }
-
-        function changeDistance(event) {
-            document.querySelector('halftone-svg-image').setAttribute('distance', event.target.value);
-        }
-
-        function changeCrossSize(event) {
-            document.querySelector('halftone-svg-image').setAttribute('crossbarlength', event.target.value);
-        }
-
-        function changeFillColor(event) {
-            document.querySelector('halftone-svg-image').setAttribute('shapecolor', event.target.value);
-        }
-
-        function changeBackgroundColor(event) {
-            document.querySelector('halftone-svg-image').setAttribute('backgroundcolor', event.target.value);
-        }
-
-        function changeBGImage(event) {
-            document.querySelector('halftone-svg-image').setAttribute('backgroundimage', event.target.value);
-        }
-
-        function uploadBGImage(event) {
-            document.querySelector('halftone-svg-image').setAttribute('backgroundimage', URL.createObjectURL(event.target.files[0]));
-        }
-
-        function changeSrcImage(event) {
-            document.querySelector('halftone-svg-image').setAttribute('src', event.target.value);
-        }
-
-        function uploadSrcImage(event) {
-            document.querySelector('halftone-svg-image').setAttribute('src', URL.createObjectURL(event.target.files[0]));
-        }
-
-
-        function changeBlendMode(event) {
-            document.querySelector('halftone-svg-image').setAttribute('blendmode', event.target.value);
-        }
-    </script>
+    <script src="demo.js"></script>
     <title>Halftone SVG Image</title>
 </head>
 <body>
@@ -168,6 +103,8 @@
     <br />
     <br />
 
-    <halftone-svg-image shapetype="altcircles" src="./sampleimages/astronaut.jpg" />
+    <halftone-svg-image id="halftone" shapetype="altcircles" src="./sampleimages/astronaut.jpg">
+        <div id="bgimage" style="width: 100%; height: 100%"></div>
+    </halftone-svg-image>
 </body>
 </html>

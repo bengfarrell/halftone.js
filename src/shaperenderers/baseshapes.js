@@ -213,9 +213,6 @@ export default class BaseShapes {
         this.A = this.opts.distanceBetween / this.scale;
         this.aspectRatio = this.width / this.height;
 
-        // how much to scale the output to match the input source
-        this.outputScaling = { x: this.w / ( this.W * this.scale ), y: this.h / ( this.H * this.scale) };
-
         this.buffer.width = this.W;
         this.buffer.height = this.H;
         this.bufferContext = this.buffer.getContext('2d');
@@ -223,12 +220,7 @@ export default class BaseShapes {
         this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
 
         if (this.opts.renderer === 'canvas') {
-            if (!this.outputCanvas) {
-                this.outputCanvas = document.createElement('canvas');
-            }
-            this.outputCanvas.width = this.w;
-            this.outputCanvas.height = this.h;
-            this.outputCanvasContext = this.outputCanvas.getContext('2d');
+            this.setCanvasOutputSize(this.opts.outputSize.width || this.w,this.opts.outputSize.height || this.h);
         }
 
         if (benchmark) {
@@ -242,6 +234,16 @@ export default class BaseShapes {
             benchmark.end = Date.now();
             this.benchmarking.push(benchmark);
         }
+    }
+
+    setCanvasOutputSize(w, h) {
+        this.opts.outputSize = { width: w, height: h };
+        if (!this.outputCanvas) {
+            this.outputCanvas = document.createElement('canvas');
+        }
+        this.outputCanvas.width = w;
+        this.outputCanvas.height = h;
+        this.outputCanvasContext = this.outputCanvas.getContext('2d');
     }
 
     render(refreshImage = false) {
@@ -328,6 +330,7 @@ export default class BaseShapes {
     }
 
     renderSVGPath() {
+        const outputScaling = { x: this.w / ( this.W * this.scale ), y: this.h / ( this.H * this.scale) };
         const path = [];
         this.dots.forEach(dot => {
             if (!dot.v) {
@@ -335,24 +338,25 @@ export default class BaseShapes {
             }
             const wantRate = Mean(dot.v) / 255;
             let r = this.calculateR(wantRate);
-            const cx = dot.x * this.scale * this.outputScaling.x;
-            const cy = dot.y * this.scale * this.outputScaling.y;
-            r = Round(r * this.scale) * this.outputScaling.x;
+            const cx = dot.x * this.scale * outputScaling.x;
+            const cy = dot.y * this.scale * outputScaling.y;
+            r = Round(r * this.scale) * outputScaling.x;
             path.push(this.renderSVGShape(cx, cy, r));
         });
         return path.join('');
     }
 
     renderBitmap() {
+        const outputScaling = { x: this.outputCanvas.width / ( this.W * this.scale ), y: this.outputCanvas.height / ( this.H * this.scale) };
         this.dots.forEach(dot => {
             if (!dot.v) {
                 return;
             }
             const wantRate = Mean(dot.v) / 255;
             let r = this.calculateR(wantRate);
-            const cx = dot.x * this.scale * this.outputScaling.x;
-            const cy = dot.y * this.scale * this.outputScaling.y;
-            r = Round(r * this.scale) * this.outputScaling.x;
+            const cx = dot.x * this.scale * outputScaling.x;
+            const cy = dot.y * this.scale * outputScaling.y;
+            r = Round(r * this.scale) * outputScaling.x;
             this.renderBitmapShape(cx, cy, r);
         });
     }

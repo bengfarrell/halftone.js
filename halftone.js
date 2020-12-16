@@ -226,9 +226,6 @@ var Halftone = (function (exports) {
             this.A = this.opts.distanceBetween / this.scale;
             this.aspectRatio = this.width / this.height;
 
-            // how much to scale the output to match the input source
-            this.outputScaling = { x: this.w / ( this.W * this.scale ), y: this.h / ( this.H * this.scale) };
-
             this.buffer.width = this.W;
             this.buffer.height = this.H;
             this.bufferContext = this.buffer.getContext('2d');
@@ -236,12 +233,7 @@ var Halftone = (function (exports) {
             this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
 
             if (this.opts.renderer === 'canvas') {
-                if (!this.outputCanvas) {
-                    this.outputCanvas = document.createElement('canvas');
-                }
-                this.outputCanvas.width = this.w;
-                this.outputCanvas.height = this.h;
-                this.outputCanvasContext = this.outputCanvas.getContext('2d');
+                this.setCanvasOutputSize(this.opts.outputSize.width || this.w,this.opts.outputSize.height || this.h);
             }
 
             if (benchmark) {
@@ -255,6 +247,16 @@ var Halftone = (function (exports) {
                 benchmark.end = Date.now();
                 this.benchmarking.push(benchmark);
             }
+        }
+
+        setCanvasOutputSize(w, h) {
+            this.opts.outputSize = { width: w, height: h };
+            if (!this.outputCanvas) {
+                this.outputCanvas = document.createElement('canvas');
+            }
+            this.outputCanvas.width = w;
+            this.outputCanvas.height = h;
+            this.outputCanvasContext = this.outputCanvas.getContext('2d');
         }
 
         render(refreshImage = false) {
@@ -341,6 +343,7 @@ var Halftone = (function (exports) {
         }
 
         renderSVGPath() {
+            const outputScaling = { x: this.w / ( this.W * this.scale ), y: this.h / ( this.H * this.scale) };
             const path = [];
             this.dots.forEach(dot => {
                 if (!dot.v) {
@@ -348,24 +351,25 @@ var Halftone = (function (exports) {
                 }
                 const wantRate = Mean(dot.v) / 255;
                 let r = this.calculateR(wantRate);
-                const cx = dot.x * this.scale * this.outputScaling.x;
-                const cy = dot.y * this.scale * this.outputScaling.y;
-                r = Round(r * this.scale) * this.outputScaling.x;
+                const cx = dot.x * this.scale * outputScaling.x;
+                const cy = dot.y * this.scale * outputScaling.y;
+                r = Round(r * this.scale) * outputScaling.x;
                 path.push(this.renderSVGShape(cx, cy, r));
             });
             return path.join('');
         }
 
         renderBitmap() {
+            const outputScaling = { x: this.outputCanvas.width / ( this.W * this.scale ), y: this.outputCanvas.height / ( this.H * this.scale) };
             this.dots.forEach(dot => {
                 if (!dot.v) {
                     return;
                 }
                 const wantRate = Mean(dot.v) / 255;
                 let r = this.calculateR(wantRate);
-                const cx = dot.x * this.scale * this.outputScaling.x;
-                const cy = dot.y * this.scale * this.outputScaling.y;
-                r = Round(r * this.scale) * this.outputScaling.x;
+                const cx = dot.x * this.scale * outputScaling.x;
+                const cy = dot.y * this.scale * outputScaling.y;
+                r = Round(r * this.scale) * outputScaling.x;
                 this.renderBitmapShape(cx, cy, r);
             });
         }
@@ -1347,12 +1351,11 @@ var Halftone = (function (exports) {
         static get RenderShapeTypes() { return RenderShapeTypes }
 
         static get observedAttributes() { return [
+            'src',
             'shapetype',
             'distance',
             'crossbarlength',
             'shapecolor',
-            'backgroundcolor',
-            'backgroundimage',
             'blendmode' ];
         }
 
@@ -1371,6 +1374,8 @@ var Halftone = (function (exports) {
             if (!this.hasAttribute('noshadow')) {
                 this.domRoot = this.attachShadow( { mode: 'open'});
             }
+            this.style.position = 'relative';
+            this.style.display = 'inline-block';
 
             /**
              * visible area bounding box
@@ -1394,17 +1399,29 @@ var Halftone = (function (exports) {
              */
             this.componentHeight = undefined;
 
+            /**
+             * slot for inserting a background layer sized to the rendered halftone
+             */
+            this.backgroundSlot = undefined;
+
+            this.createBackgroundSlot();
             this.createRenderer();
         }
 
         /**
          * update canvas dimensions when resized
-         * @private
+         * @return modified
          */
         resize() {
             const bounds = this.getBoundingClientRect();
             if (bounds.width === 0 || bounds.height === 0) {
-                return;
+                return false;
+            }
+
+            if (bounds.width === this.componentWidth ||
+                bounds.height === this.componentHeight ||
+                this.sourceAspectRatio === this.renderer.aspectRatio) {
+                return false;
             }
 
             this.componentWidth = bounds.width;
@@ -1412,6 +1429,7 @@ var Halftone = (function (exports) {
             let renderWidth = bounds.width;
             let renderHeight = bounds.height;
             const componentAspectRatio = bounds.width / bounds.height;
+            this.sourceAspectRatio = this.renderer.aspectRatio;
 
             // calculate letterbox borders
             if (componentAspectRatio < this.renderer.aspectRatio) {
@@ -1431,13 +1449,21 @@ var Halftone = (function (exports) {
             this.visibleRect.y = this.letterBoxTop;
             this.visibleRect.width = renderWidth;
             this.visibleRect.height = renderHeight;
-        };
 
+            this.backgroundSlot.style.width = `${this.visibleRect.width}px`;
+            this.backgroundSlot.style.height = `${this.visibleRect.height}px`;
+            this.backgroundSlot.style.top = `${this.visibleRect.y}px`;
+            this.backgroundSlot.style.left = `${this.visibleRect.xt}px`;
+            return true;
+        };
 
         connectedCallback() {
             if (this.hasAttribute('noshadow')) {
                 this.domRoot = this;
             }
+
+            console.log('add bg slot', this.backgroundSlot);
+            this.domRoot.appendChild(this.backgroundSlot);
         }
 
         attributeChangedCallback(name, oldValue, newValue) {
@@ -1478,6 +1504,12 @@ var Halftone = (function (exports) {
             }
             const type = this.hasAttribute('shapetype') ? this.getAttribute('shapetype') : 'circles';
             this.renderer = RendererFactory(type, this.createRendererOptions(), input);
+        }
+
+        createBackgroundSlot() {
+            this.backgroundSlot = document.createElement('slot');
+            this.backgroundSlot.style.position = 'absolute';
+            this.backgroundSlot.style.display = 'inline-block';
         }
     }
 
@@ -1685,21 +1717,32 @@ var Halftone = (function (exports) {
 
         connectedCallback() {
             super.connectedCallback();
+
             this.domRoot.appendChild(this.canvas);
+            this.canvas.style.position = 'absolute';
         }
 
         loadImage(uri) {
-            this.renderer.loadURL(uri).then( () => { this.render(); });
+            this.renderer.loadImage(uri).then( () => { this.render(); });
+        }
+
+        resize() {
+            let modified = super.resize();
+            if (modified) {
+                this.canvas.style.top = this.visibleRect.y + 'px';
+                this.canvas.style.left = this.visibleRect.x + 'px';
+            }
+            return modified;
         }
 
         render() {
             if (this.renderer && this.renderer.isSourceReady) {
-                const bgColor = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
+                const modified = this.resize();
+                if (modified) {
+                    this.renderer.setCanvasOutputSize(this.visibleRect.width, this.visibleRect.height);
+                }
+                this.renderer.outputCanvasContext.clearRect(0, 0, this.renderer.outputCanvas.width, this.renderer.outputCanvas.height);
                 const fillColor = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
-                this.renderer.outputCanvasContext.fillStyle = bgColor;
-                this.renderer.outputCanvasContext.beginPath();
-                this.renderer.outputCanvasContext.rect(0, 0, this.renderer.w, this.renderer.h );
-                this.renderer.outputCanvasContext.fill();
 
                 this.renderer.outputCanvasContext.fillStyle = fillColor;
                 this.renderer.render();
@@ -1709,12 +1752,18 @@ var Halftone = (function (exports) {
         attributeChangedCallback(name, oldValue, newValue) {
             super.attributeChangedCallback(name, oldValue, newValue);
             switch (name) {
-                case 'backgroundcolor':
-                    this.render();
+                case 'blendmode':
+                    this.canvas.style['mix-blend-mode'] = newValue;
                     break;
 
                 case 'shapecolor':
                     this.render();
+                    break;
+
+                case 'src':
+                    if (this.renderer) {
+                        this.loadImage(newValue);
+                    }
                     break;
 
             }
@@ -1723,10 +1772,12 @@ var Halftone = (function (exports) {
         createRendererOptions() {
             if (!this.canvas) {
                 this.canvas = document.createElement('canvas');
+                this.canvas.style.position = 'relative';
             }
             const opts = super.createRendererOptions();
             opts.renderer = 'canvas';
             opts.outputCanvas = this.canvas;
+            opts.outputSize = this.renderer?.opts.outputSize ? this.renderer?.opts.outputSize : { width: 0, height: 0 };
             return opts;
         }
     }
@@ -1921,11 +1972,6 @@ var Halftone = (function (exports) {
     }
 
     class HalftoneSVGImage extends BaseHalftoneElement {
-
-        static get observedAttributes() {
-            return [...BaseHalftoneElement.observedAttributes, 'src'];
-        }
-
         constructor() {
             super();
 
@@ -1934,13 +1980,36 @@ var Halftone = (function (exports) {
              */
             this.cachedSVGPath = undefined;
 
+            /**
+             * svg element
+             */
+            this.svgEl = undefined;
+
             if (this.getAttribute('src')) {
                 this.loadImage(this.getAttribute('src'));
             }
+
+            this.createSVGElement();
+        }
+
+        connectedCallback() {
+            super.connectedCallback();
+            this.domRoot.appendChild(this.svgEl);
         }
 
         loadImage(uri) {
             this.renderer.loadImage(uri).then( () => { this.render(); });
+        }
+
+        resize() {
+            let modified = super.resize();
+            if (modified) {
+                this.svgEl.style.top = this.visibleRect.y + 'px';
+                this.svgEl.style.left = this.visibleRect.x + 'px';
+                this.svgEl.style.width = this.visibleRect.width + 'px';
+                this.svgEl.style.height = this.visibleRect.height + 'px';
+            }
+            return modified;
         }
 
         /**
@@ -1953,54 +2022,46 @@ var Halftone = (function (exports) {
                 if (dorender) {
                     this.cachedSVGPath = this.renderer.render();
                 }
-                this.domRoot.innerHTML = `<style>
-            svg {
-                position: relative;
-                top: ${this.visibleRect.y}px;
-                left: ${this.visibleRect.x}px;
-            }
-            </style>
-            ${this.getSVG()}`;
-                this.style.display = 'inline-block';
+                this.svgEl.innerHTML = this.svgPathWithTransformGroup;
             }
         }
 
         /**
          * get SVG markup
-         * @return {any}
+         * @return string
          */
-        getSVG() {
-            const fill = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
-            const background = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
-            const backgroundimg = this.hasAttribute('backgroundimage') ? this.getAttribute('backgroundimage') : undefined;
-            const backgroundimgcss = backgroundimg ? `background-image: url('${backgroundimg}');` : '';
-            const blendmode = this.hasAttribute('blendmode') ? this.getAttribute('blendmode') : 'normal';
-
-            return `<svg style="${backgroundimgcss} background-color: ${background}"
-                    width="${this.visibleRect.width}"
-                    height="${this.visibleRect.height}">
-            <g fill="${fill}" transform="scale(${this.visibleRect.width / this.renderer.width}, ${this.visibleRect.height / this.renderer.height})" style="mix-blend-mode: ${blendmode}">
-                <path d="${this.svgPath}"></path>
-            </g>
+        get svg() {
+            return `<svg width="${this.visibleRect.width}" height="${this.visibleRect.height}">
+            ${this.svgPathWithTransformGroup}
         </svg>`;
         }
 
         /**
          * get SVG path data from last render
-         * @return {any}
          */
         get svgPath() {
             return this.cachedSVGPath;
         }
 
+        /**
+         * get SVG path with surrounding transform group
+         */
+        get svgPathWithTransformGroup() {
+            const fill = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
+            return `<g fill="${fill}" transform="scale(${this.visibleRect.width / this.renderer.width}, ${this.visibleRect.height / this.renderer.height})">
+            <path d="${this.svgPath}"></path>
+        </g>`;
+        }
+
         attributeChangedCallback(name, oldValue, newValue) {
             super.attributeChangedCallback(name, oldValue, newValue);
             switch (name) {
-                case 'backgroundimage':
-                case 'backgroundcolor':
                 case 'shapecolor':
-                case 'blendmode':
                     this.render(false);
+                    break;
+
+                case 'blendmode':
+                    this.svgEl.style['mix-blend-mode'] = newValue;
                     break;
 
                 case 'src':
@@ -2017,66 +2078,11 @@ var Halftone = (function (exports) {
             return opts;
         }
 
-        rasterizeToCanvas() {
-            return this.rasterize();
+        createSVGElement() {
+            this.svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            this.svgEl.style.position = 'absolute';
+            this.svgEl.style.display = 'inline-block';
         }
-
-        rasterizeToPNG() {
-            return new Promise( (resolve) => {
-                const canvas = this.rasterizeToCanvas().then( (canvas) => {
-                    resolve(canvas.toDataURL("image/png"));
-                });
-            });
-        }
-
-        rasterize() {
-            return new Promise( (resolve) => {
-                const finalizeSVG = (dataURLBackground) => {
-                    const fill = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
-                    const blendmode = this.hasAttribute('blendmode') ? this.getAttribute('blendmode') : 'normal';
-
-                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                    svg.innerHTML = `<g fill="${fill}" transform="scale(${this.visibleRect.width / this.renderer.width}, ${this.visibleRect.height / this.renderer.height})" style="mix-blend-mode: ${blendmode}">
-                                        <path d="${this.svgPath}"></path>
-                                    </g>`;
-
-                    if (dataURLBackground) {
-                        svg.style.backgroundImage = `url(${dataURLBackground})`;
-                    } else {
-                        svg.style.backgroundColor = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
-                    }
-                    const xml = new XMLSerializer().serializeToString(svg);
-                    const svg64 = btoa(xml);
-                    const b64Start = 'data:image/svg+xml;base64,';
-                    const image64 = b64Start + svg64;
-
-                    const img = document.createElement('img');
-                    const canvas = document.createElement('canvas');
-                    canvas.width = this.visibleRect.width;
-                    canvas.height = this.visibleRect.height;
-                    img.onload = function () {
-                        canvas.getContext('2d').drawImage(img, 0, 0);
-                        resolve(canvas);
-                    };
-                    img.src = image64;
-                };
-
-                if (this.hasAttribute('backgroundimage')) {
-                    const request = new XMLHttpRequest();
-                    request.open('GET', this.getAttribute('backgroundimage'), true);
-                    request.responseType = 'blob';
-                    request.onload = () => {
-                        var reader = new FileReader();
-                        reader.readAsDataURL(request.response);
-                        reader.onload = e => finalizeSVG(e.target.result);
-                    };
-                    request.send();
-                } else {
-                    finalizeSVG();
-                }
-            });
-        }
-
     }
 
     if (!customElements.get('halftone-svg-image')) {
