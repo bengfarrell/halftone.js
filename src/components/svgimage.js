@@ -59,8 +59,8 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
      * get SVG markup
      * @return string
      */
-    get svg() {
-        return `<svg width="${this.visibleRect.width}" height="${this.visibleRect.height}">
+    getSVG(width, height) {
+        return `<svg width="${width | this.visibleRect.width}" height="${height | this.visibleRect.height}" xmlns="http://www.w3.org/2000/svg">
             ${this.svgPathWithTransformGroup}
         </svg>`;
     }

@@ -61,6 +61,14 @@ export class BaseHalftoneElement extends HTMLElement {
         this.createRenderer();
     }
 
+    get contentWidth() {
+        return this.visibleRect.width;
+    }
+
+    get contentHeight() {
+        return this.visibleRect.height;
+    }
+
     /**
      * update canvas dimensions when resized
      * @return modified

@@ -1405,6 +1405,14 @@ class BaseHalftoneElement extends HTMLElement {
         this.createRenderer();
     }
 
+    get contentWidth() {
+        return this.visibleRect.width;
+    }
+
+    get contentHeight() {
+        return this.visibleRect.height;
+    }
+
     /**
      * update canvas dimensions when resized
      * @return modified
@@ -1459,7 +1467,6 @@ class BaseHalftoneElement extends HTMLElement {
             this.domRoot = this;
         }
 
-        console.log('add bg slot', this.backgroundSlot);
         this.domRoot.appendChild(this.backgroundSlot);
     }
 
@@ -1762,7 +1769,6 @@ class HalftoneBitmapImage extends BaseHalftoneElement {
                     this.loadImage(newValue);
                 }
                 break;
-
         }
     }
 
@@ -2027,8 +2033,8 @@ class HalftoneSVGImage extends BaseHalftoneElement {
      * get SVG markup
      * @return string
      */
-    get svg() {
-        return `<svg width="${this.visibleRect.width}" height="${this.visibleRect.height}">
+    getSVG(width, height) {
+        return `<svg width="${width | this.visibleRect.width}" height="${height | this.visibleRect.height}" xmlns="http://www.w3.org/2000/svg">
             ${this.svgPathWithTransformGroup}
         </svg>`;
     }

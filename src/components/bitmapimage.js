@@ -60,7 +60,6 @@ export class HalftoneBitmapImage extends BaseHalftoneElement {
                     this.loadImage(newValue);
                 }
                 break;
-
         }
     }
 

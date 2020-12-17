@@ -1408,6 +1408,14 @@ var Halftone = (function (exports) {
             this.createRenderer();
         }
 
+        get contentWidth() {
+            return this.visibleRect.width;
+        }
+
+        get contentHeight() {
+            return this.visibleRect.height;
+        }
+
         /**
          * update canvas dimensions when resized
          * @return modified
@@ -1462,7 +1470,6 @@ var Halftone = (function (exports) {
                 this.domRoot = this;
             }
 
-            console.log('add bg slot', this.backgroundSlot);
             this.domRoot.appendChild(this.backgroundSlot);
         }
 
@@ -1765,7 +1772,6 @@ var Halftone = (function (exports) {
                         this.loadImage(newValue);
                     }
                     break;
-
             }
         }
 
@@ -2030,8 +2036,8 @@ var Halftone = (function (exports) {
          * get SVG markup
          * @return string
          */
-        get svg() {
-            return `<svg width="${this.visibleRect.width}" height="${this.visibleRect.height}">
+        getSVG(width, height) {
+            return `<svg width="${width | this.visibleRect.width}" height="${height | this.visibleRect.height}" xmlns="http://www.w3.org/2000/svg">
             ${this.svgPathWithTransformGroup}
         </svg>`;
         }
