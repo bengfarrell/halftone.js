@@ -1356,6 +1356,10 @@ class BaseHalftoneElement extends HTMLElement {
         'blendmode' ];
     }
 
+    loadImage(uri) {
+        this.renderer.loadImage(uri).then( () => { this.render(); });
+    }
+
     set distanceBetween(val) {
         if (this.renderer) {
             this.renderer.distanceBetween = val;
@@ -1403,6 +1407,10 @@ class BaseHalftoneElement extends HTMLElement {
 
         this.createBackgroundSlot();
         this.createRenderer();
+
+        if (this.getAttribute('src')) {
+            this.loadImage(this.getAttribute('src'));
+        }
     }
 
     get contentWidth() {
@@ -1459,6 +1467,11 @@ class BaseHalftoneElement extends HTMLElement {
         this.backgroundSlot.style.height = `${this.visibleRect.height}px`;
         this.backgroundSlot.style.top = `${this.visibleRect.y}px`;
         this.backgroundSlot.style.left = `${this.visibleRect.xt}px`;
+
+        this.halftoneSurface.style.top = this.visibleRect.y + 'px';
+        this.halftoneSurface.style.left = this.visibleRect.x + 'px';
+        this.halftoneSurface.style.width = this.visibleRect.width + 'px';
+        this.halftoneSurface.style.height = this.visibleRect.height + 'px';
         return true;
     };
 
@@ -1478,16 +1491,28 @@ class BaseHalftoneElement extends HTMLElement {
                     this.render();
                 }
                 return;
+
             case 'distance':
                 this.renderer.distanceBetween = newValue;
                 this.render();
                 return;
+
             case 'crossbarlength':
                 if (this.renderer.rendererType === 'crosses') {
                     this.renderer.crossBarLength = newValue;
                     this.render();
                 }
                 return;
+
+            case 'src':
+                if (this.renderer) {
+                    this.loadImage(newValue);
+                }
+                break;
+
+            case 'blendmode':
+                this.halftoneSurface.style['mix-blend-mode'] = newValue;
+                break;
         }
     }
 
@@ -1712,31 +1737,9 @@ if (!customElements.get('halftone-bitmap-camera')) {
 class HalftoneBitmapImage extends BaseHalftoneElement {
     static get rendererType() { return 'canvas'; }
 
-    constructor() {
-        super();
-        if (this.getAttribute('src')) {
-            this.loadImage(this.getAttribute('src'));
-        }
-    }
-
     connectedCallback() {
         super.connectedCallback();
-
-        this.domRoot.appendChild(this.canvas);
-        this.canvas.style.position = 'absolute';
-    }
-
-    loadImage(uri) {
-        this.renderer.loadImage(uri).then( () => { this.render(); });
-    }
-
-    resize() {
-        let modified = super.resize();
-        if (modified) {
-            this.canvas.style.top = this.visibleRect.y + 'px';
-            this.canvas.style.left = this.visibleRect.x + 'px';
-        }
-        return modified;
+        this.domRoot.appendChild(this.halftoneSurface);
     }
 
     render() {
@@ -1756,30 +1759,22 @@ class HalftoneBitmapImage extends BaseHalftoneElement {
     attributeChangedCallback(name, oldValue, newValue) {
         super.attributeChangedCallback(name, oldValue, newValue);
         switch (name) {
-            case 'blendmode':
-                this.canvas.style['mix-blend-mode'] = newValue;
-                break;
-
             case 'shapecolor':
                 this.render();
-                break;
-
-            case 'src':
-                if (this.renderer) {
-                    this.loadImage(newValue);
-                }
                 break;
         }
     }
 
     createRendererOptions() {
-        if (!this.canvas) {
-            this.canvas = document.createElement('canvas');
-            this.canvas.style.position = 'relative';
-        }
         const opts = super.createRendererOptions();
+
+        if (!this.halftoneSurface) {
+            this.halftoneSurface = document.createElement('canvas');
+            this.halftoneSurface.style.position = 'absolute';
+        }
+
         opts.renderer = 'canvas';
-        opts.outputCanvas = this.canvas;
+        opts.outputCanvas = this.halftoneSurface;
         opts.outputSize = this.renderer?.opts.outputSize ? this.renderer?.opts.outputSize : { width: 0, height: 0 };
         return opts;
     }
@@ -1975,44 +1970,9 @@ if (!customElements.get('halftone-svg-camera')) {
 }
 
 class HalftoneSVGImage extends BaseHalftoneElement {
-    constructor() {
-        super();
-
-        /**
-         * last SVG render
-         */
-        this.cachedSVGPath = undefined;
-
-        /**
-         * svg element
-         */
-        this.svgEl = undefined;
-
-        if (this.getAttribute('src')) {
-            this.loadImage(this.getAttribute('src'));
-        }
-
-        this.createSVGElement();
-    }
-
     connectedCallback() {
         super.connectedCallback();
-        this.domRoot.appendChild(this.svgEl);
-    }
-
-    loadImage(uri) {
-        this.renderer.loadImage(uri).then( () => { this.render(); });
-    }
-
-    resize() {
-        let modified = super.resize();
-        if (modified) {
-            this.svgEl.style.top = this.visibleRect.y + 'px';
-            this.svgEl.style.left = this.visibleRect.x + 'px';
-            this.svgEl.style.width = this.visibleRect.width + 'px';
-            this.svgEl.style.height = this.visibleRect.height + 'px';
-        }
-        return modified;
+        this.domRoot.appendChild(this.halftoneSurface);
     }
 
     /**
@@ -2025,7 +1985,7 @@ class HalftoneSVGImage extends BaseHalftoneElement {
             if (dorender) {
                 this.cachedSVGPath = this.renderer.render();
             }
-            this.svgEl.innerHTML = this.svgPathWithTransformGroup;
+            this.halftoneSurface.innerHTML = this.svgPathWithTransformGroup;
         }
     }
 
@@ -2062,29 +2022,20 @@ class HalftoneSVGImage extends BaseHalftoneElement {
             case 'shapecolor':
                 this.render(false);
                 break;
-
-            case 'blendmode':
-                this.svgEl.style['mix-blend-mode'] = newValue;
-                break;
-
-            case 'src':
-                if (this.renderer) {
-                    this.loadImage(newValue);
-                }
-                break;
         }
     }
 
     createRendererOptions() {
         const opts = super.createRendererOptions();
+
+        if (!this.halftoneSurface) {
+            this.halftoneSurface = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            this.halftoneSurface.style.position = 'absolute';
+            this.halftoneSurface.style.display = 'inline-block';
+        }
+
         opts.renderer = 'svgpath';
         return opts;
-    }
-
-    createSVGElement() {
-        this.svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        this.svgEl.style.position = 'absolute';
-        this.svgEl.style.display = 'inline-block';
     }
 }
 
