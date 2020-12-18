@@ -13,7 +13,7 @@ function changeShape(event) {
 
 function downloadSVG() {
     const dl = document.createElement('a');
-    const data = "data:image/svg+xml," + escape(document.getElementById('halftone').svg)
+    const data = "data:image/svg+xml," + escape(document.getElementById('halftone').getSVG())
     dl.setAttribute('download', 'halftone.svg');
     dl.setAttribute('href', data);
     dl.click();
@@ -114,7 +114,7 @@ function changeBGImage(event) {
 
 function uploadBGImage(event) {
     backgroundImage = URL.createObjectURL(event.target.files[0]);
-    document.getElementById('halftone').setAttribute('backgroundimage', backgroundImage);
+    document.getElementById('bgimage').style.backgroundImage = `url("${backgroundImage}")`;
 }
 
 function changeSrcImage(event) {

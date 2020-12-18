@@ -1,44 +1,9 @@
 import { BaseHalftoneElement } from './basecomponent';
 
 export class HalftoneSVGImage extends BaseHalftoneElement {
-    constructor() {
-        super();
-
-        /**
-         * last SVG render
-         */
-        this.cachedSVGPath = undefined;
-
-        /**
-         * svg element
-         */
-        this.svgEl = undefined;
-
-        if (this.getAttribute('src')) {
-            this.loadImage(this.getAttribute('src'));
-        }
-
-        this.createSVGElement();
-    }
-
     connectedCallback() {
         super.connectedCallback();
-        this.domRoot.appendChild(this.svgEl);
-    }
-
-    loadImage(uri) {
-        this.renderer.loadImage(uri).then( () => { this.render() });
-    }
-
-    resize() {
-        let modified = super.resize();
-        if (modified) {
-            this.svgEl.style.top = this.visibleRect.y + 'px';
-            this.svgEl.style.left = this.visibleRect.x + 'px';
-            this.svgEl.style.width = this.visibleRect.width + 'px';
-            this.svgEl.style.height = this.visibleRect.height + 'px';
-        }
-        return modified;
+        this.domRoot.appendChild(this.halftoneSurface);
     }
 
     /**
@@ -51,7 +16,7 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
             if (dorender) {
                 this.cachedSVGPath = this.renderer.render();
             }
-            this.svgEl.innerHTML = this.svgPathWithTransformGroup;
+            this.halftoneSurface.innerHTML = this.svgPathWithTransformGroup;
         }
     }
 
@@ -88,29 +53,20 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
             case 'shapecolor':
                 this.render(false);
                 break;
-
-            case 'blendmode':
-                this.svgEl.style['mix-blend-mode'] = newValue;
-                break;
-
-            case 'src':
-                if (this.renderer) {
-                    this.loadImage(newValue);
-                }
-                break;
         }
     }
 
     createRendererOptions() {
         const opts = super.createRendererOptions();
+
+        if (!this.halftoneSurface) {
+            this.halftoneSurface = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            this.halftoneSurface.style.position = 'absolute';
+            this.halftoneSurface.style.display = 'inline-block';
+        }
+
         opts.renderer = 'svgpath';
         return opts;
-    }
-
-    createSVGElement() {
-        this.svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        this.svgEl.style.position = 'absolute';
-        this.svgEl.style.display = 'inline-block';
     }
 }
 

@@ -3,31 +3,9 @@ import { BaseHalftoneElement } from './basecomponent';
 export class HalftoneBitmapImage extends BaseHalftoneElement {
     static get rendererType() { return 'canvas'; }
 
-    constructor() {
-        super();
-        if (this.getAttribute('src')) {
-            this.loadImage(this.getAttribute('src'));
-        }
-    }
-
     connectedCallback() {
         super.connectedCallback();
-
-        this.domRoot.appendChild(this.canvas);
-        this.canvas.style.position = 'absolute';
-    }
-
-    loadImage(uri) {
-        this.renderer.loadImage(uri).then( () => { this.render() });
-    }
-
-    resize() {
-        let modified = super.resize();
-        if (modified) {
-            this.canvas.style.top = this.visibleRect.y + 'px';
-            this.canvas.style.left = this.visibleRect.x + 'px';
-        }
-        return modified;
+        this.domRoot.appendChild(this.halftoneSurface);
     }
 
     render() {
@@ -47,30 +25,22 @@ export class HalftoneBitmapImage extends BaseHalftoneElement {
     attributeChangedCallback(name, oldValue, newValue) {
         super.attributeChangedCallback(name, oldValue, newValue);
         switch (name) {
-            case 'blendmode':
-                this.canvas.style['mix-blend-mode'] = newValue;
-                break;
-
             case 'shapecolor':
                 this.render();
-                break;
-
-            case 'src':
-                if (this.renderer) {
-                    this.loadImage(newValue);
-                }
                 break;
         }
     }
 
     createRendererOptions() {
-        if (!this.canvas) {
-            this.canvas = document.createElement('canvas');
-            this.canvas.style.position = 'relative';
-        }
         const opts = super.createRendererOptions();
+
+        if (!this.halftoneSurface) {
+            this.halftoneSurface = document.createElement('canvas');
+            this.halftoneSurface.style.position = 'absolute';
+        }
+
         opts.renderer = 'canvas';
-        opts.outputCanvas = this.canvas;
+        opts.outputCanvas = this.halftoneSurface;
         opts.outputSize = this.renderer?.opts.outputSize ? this.renderer?.opts.outputSize : { width: 0, height: 0 };
         return opts;
     }

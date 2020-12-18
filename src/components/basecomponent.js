@@ -12,6 +12,10 @@ export class BaseHalftoneElement extends HTMLElement {
         'blendmode' ];
     }
 
+    loadImage(uri) {
+        this.renderer.loadImage(uri).then( () => { this.render() });
+    }
+
     set distanceBetween(val) {
         if (this.renderer) {
             this.renderer.distanceBetween = val;
@@ -59,6 +63,10 @@ export class BaseHalftoneElement extends HTMLElement {
 
         this.createBackgroundSlot();
         this.createRenderer();
+
+        if (this.getAttribute('src')) {
+            this.loadImage(this.getAttribute('src'));
+        }
     }
 
     get contentWidth() {
@@ -115,6 +123,11 @@ export class BaseHalftoneElement extends HTMLElement {
         this.backgroundSlot.style.height = `${this.visibleRect.height}px`;
         this.backgroundSlot.style.top = `${this.visibleRect.y}px`;
         this.backgroundSlot.style.left = `${this.visibleRect.xt}px`;
+
+        this.halftoneSurface.style.top = this.visibleRect.y + 'px';
+        this.halftoneSurface.style.left = this.visibleRect.x + 'px';
+        this.halftoneSurface.style.width = this.visibleRect.width + 'px';
+        this.halftoneSurface.style.height = this.visibleRect.height + 'px';
         return true;
     };
 
@@ -134,16 +147,28 @@ export class BaseHalftoneElement extends HTMLElement {
                     this.render();
                 }
                 return;
+
             case 'distance':
                 this.renderer.distanceBetween = newValue;
                 this.render();
                 return;
+
             case 'crossbarlength':
                 if (this.renderer.rendererType === 'crosses') {
                     this.renderer.crossBarLength = newValue;
                     this.render();
                 }
                 return;
+
+            case 'src':
+                if (this.renderer) {
+                    this.loadImage(newValue);
+                }
+                break;
+
+            case 'blendmode':
+                this.halftoneSurface.style['mix-blend-mode'] = newValue;
+                break;
         }
     }
 
