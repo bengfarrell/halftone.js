@@ -13,7 +13,15 @@ export class BaseHalftoneElement extends HTMLElement {
     }
 
     loadImage(uri) {
-        this.renderer.loadImage(uri).then( () => { this.render() });
+        this.inputSource = new Image();
+        this.inputSource.addEventListener('load', e => {
+            if (this.renderer) {
+                this.renderer.input = this.inputSource;
+                this.resize();
+                this.render();
+            }
+        });
+        this.inputSource.src = uri;
     }
 
     set distanceBetween(val) {
@@ -61,12 +69,21 @@ export class BaseHalftoneElement extends HTMLElement {
          */
         this.backgroundSlot = undefined;
 
+        /**
+         * surface for halftone rendering
+         */
+        this.halftoneSurface = undefined;
+
         this.createBackgroundSlot();
         this.createRenderer();
 
         if (this.getAttribute('src')) {
             this.loadImage(this.getAttribute('src'));
         }
+    }
+
+    get renderSurface() {
+        return this.halftoneSurface;
     }
 
     get contentWidth() {
@@ -161,9 +178,7 @@ export class BaseHalftoneElement extends HTMLElement {
                 return;
 
             case 'src':
-                if (this.renderer) {
-                    this.loadImage(newValue);
-                }
+                this.loadImage(newValue);
                 break;
 
             case 'blendmode':
@@ -175,7 +190,7 @@ export class BaseHalftoneElement extends HTMLElement {
     render() {}
 
     createRendererOptions() {
-        const opts = {};
+        const opts = { inputSource: this.inputSource };
         if (this.hasAttribute('distance')) {
             opts.distanceBetween = Number(this.getAttribute('distance'));
         }
@@ -183,10 +198,6 @@ export class BaseHalftoneElement extends HTMLElement {
     }
 
     createRenderer(input) {
-        const opts = { renderer: this.constructor.rendererType };
-        if (this.hasAttribute('distance')) {
-            opts.distanceBetween = Number(this.getAttribute('distance'));
-        }
         const type = this.hasAttribute('shapetype') ? this.getAttribute('shapetype') : 'circles';
         this.renderer = RendererFactory(type, this.createRendererOptions(), input);
     }

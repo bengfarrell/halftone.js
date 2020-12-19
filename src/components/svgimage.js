@@ -11,7 +11,6 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
      * @param dorender - default true, allow not invoking the underlying render function
      */
     render(dorender = true) {
-        this.resize();
         if (this.renderer && this.renderer.isSourceReady) {
             if (dorender) {
                 this.cachedSVGPath = this.renderer.render();

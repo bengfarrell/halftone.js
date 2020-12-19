@@ -8,12 +8,16 @@ export class HalftoneBitmapImage extends BaseHalftoneElement {
         this.domRoot.appendChild(this.halftoneSurface);
     }
 
+    resize() {
+        const modified = super.resize();
+        if (modified) {
+            this.renderer.setCanvasOutputSize(this.visibleRect.width, this.visibleRect.height);
+        }
+        return modified;
+    }
+
     render() {
         if (this.renderer && this.renderer.isSourceReady) {
-            const modified = this.resize();
-            if (modified) {
-                this.renderer.setCanvasOutputSize(this.visibleRect.width, this.visibleRect.height);
-            }
             this.renderer.outputCanvasContext.clearRect(0, 0, this.renderer.outputCanvas.width, this.renderer.outputCanvas.height);
             const fillColor = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
 

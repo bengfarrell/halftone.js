@@ -70,7 +70,7 @@ function downloadImageCanvas() {
                 drawBackgroundImage(ctx, bg);
             }
             ctx.globalCompositeOperation = blendMode;
-            ctx.drawImage(ht.canvas, 0, 0);
+            ctx.drawImage(ht.renderSurface, 0, 0);
             downloadCanvasAsImage(canvas);
         }
     }
