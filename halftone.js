@@ -128,8 +128,7 @@ var Halftone = (function (exports) {
             if (!this.height) {
                 return false;
             }
-
-            return this.inputSource.complete;
+            return true;
         }
 
         preInit() {}
@@ -156,9 +155,8 @@ var Halftone = (function (exports) {
          */
         set input(src) {
             this.inputSource = src;
-            this.width = this.inputSource.width;
-            this.height = this.inputSource.height;
-
+            this.width = this.inputSource.width | this.inputSource.videoWidth;
+            this.height = this.inputSource.height | this.inputSource.videoHeight;
             if (this.isSourceReady) {
                 this.init();
             }
@@ -216,13 +214,11 @@ var Halftone = (function (exports) {
             }
             this.dots = [];
             this.buckets = [];
-            this.w = this.inputSource.width;
-            this.h = this.inputSource.height;
-            this.m = Math.max(this.w, this.h);
+            this.m = Math.max(this.width, this.height);
             this.div = Math.max(1, this.m / 1000);
             this.scale = this.opts.distanceBetween / 3;
-            this.W = Math.round(this.w / this.div / this.scale);
-            this.H = Math.round(this.h / this.div / this.scale);
+            this.W = Math.round(this.width / this.div / this.scale);
+            this.H = Math.round(this.height / this.div / this.scale);
             this.A = this.opts.distanceBetween / this.scale;
             this.aspectRatio = this.width / this.height;
 
@@ -233,7 +229,7 @@ var Halftone = (function (exports) {
             this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
 
             if (this.opts.renderer === 'canvas') {
-                this.setCanvasOutputSize(this.opts.outputSize.width || this.w,this.opts.outputSize.height || this.h);
+                this.setCanvasOutputSize(this.opts.outputSize.width || this.width,this.opts.outputSize.height || this.height);
             }
 
             if (benchmark) {
@@ -320,8 +316,8 @@ var Halftone = (function (exports) {
 
                 case 'svg':
                     const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-                    svg.setAttribute('width', this.w);
-                    svg.setAttribute('height', this.h);
+                    svg.setAttribute('width', this.width);
+                    svg.setAttribute('height', this.height);
                     svg.innerHTML = `<path d="${this.renderSVGPath()}"></path>`;
                     output = svg;
                     break;
@@ -343,7 +339,7 @@ var Halftone = (function (exports) {
         }
 
         renderSVGPath() {
-            const outputScaling = { x: this.w / ( this.W * this.scale ), y: this.h / ( this.H * this.scale) };
+            const outputScaling = { x: this.width / ( this.W * this.scale ), y: this.height / ( this.H * this.scale) };
             const path = [];
             this.dots.forEach(dot => {
                 if (!dot.v) {
@@ -1356,11 +1352,20 @@ var Halftone = (function (exports) {
             'distance',
             'crossbarlength',
             'shapecolor',
+            'refreshrate',
             'blendmode' ];
         }
 
         loadImage(uri) {
-            this.renderer.loadImage(uri).then( () => { this.render(); });
+            this.inputSource = new Image();
+            this.inputSource.addEventListener('load', e => {
+                if (this.renderer) {
+                    this.renderer.input = this.inputSource;
+                    this.resize();
+                    this.render();
+                }
+            });
+            this.inputSource.src = uri;
         }
 
         set distanceBetween(val) {
@@ -1408,12 +1413,31 @@ var Halftone = (function (exports) {
              */
             this.backgroundSlot = undefined;
 
+            /**
+             * surface for halftone rendering
+             */
+            this.halftoneSurface = undefined;
+
+            /**
+             * refresh rate for input sources that change (like video)
+             */
+            this.refreshRate = 150;
+
             this.createBackgroundSlot();
             this.createRenderer();
 
             if (this.getAttribute('src')) {
-                this.loadImage(this.getAttribute('src'));
+                const source = this.getAttribute('src');
+                if (source === 'camera') {
+                    this.startCamera();
+                } else {
+                    this.loadImage(source);
+                }
             }
+        }
+
+        get renderSurface() {
+            return this.halftoneSurface;
         }
 
         get contentWidth() {
@@ -1508,7 +1532,10 @@ var Halftone = (function (exports) {
                     return;
 
                 case 'src':
-                    if (this.renderer) {
+                    this.cleanup();
+                    if (newValue === 'camera') {
+                        this.startCamera();
+                    } else {
                         this.loadImage(newValue);
                     }
                     break;
@@ -1516,13 +1543,47 @@ var Halftone = (function (exports) {
                 case 'blendmode':
                     this.halftoneSurface.style['mix-blend-mode'] = newValue;
                     break;
+
+                case 'refreshrate':
+                    this.refreshRate = newValue;
+                    if (this._timer) {
+                        clearInterval(this._timer);
+                        this._timer = setInterval( () => {
+                            this.render();
+                        }, this.refreshRate);
+                    }
             }
         }
 
         render() {}
 
+        async startCamera() {
+            this.inputSource = document.createElement('video');
+            this._stream = await navigator.mediaDevices.getUserMedia({
+                'audio': false,
+                'video': {
+                    width: this.width,
+                    height: this.height,
+                },
+            });
+
+            this.inputSource.onloadedmetadata = event => {
+                this.renderer.input = this.inputSource;
+                this.resize();
+            };
+
+            this.inputSource.onplaying = () => {
+                this._timer = setInterval( () => {
+                    this.render();
+                }, this.refreshRate);
+            };
+
+            this.inputSource.srcObject = this._stream;
+            this.inputSource.play();
+        }
+
         createRendererOptions() {
-            const opts = {};
+            const opts = { inputSource: this.inputSource };
             if (this.hasAttribute('distance')) {
                 opts.distanceBetween = Number(this.getAttribute('distance'));
             }
@@ -1530,10 +1591,6 @@ var Halftone = (function (exports) {
         }
 
         createRenderer(input) {
-            const opts = { renderer: this.constructor.rendererType };
-            if (this.hasAttribute('distance')) {
-                opts.distanceBetween = Number(this.getAttribute('distance'));
-            }
             const type = this.hasAttribute('shapetype') ? this.getAttribute('shapetype') : 'circles';
             this.renderer = RendererFactory(type, this.createRendererOptions(), input);
         }
@@ -1543,198 +1600,20 @@ var Halftone = (function (exports) {
             this.backgroundSlot.style.position = 'absolute';
             this.backgroundSlot.style.display = 'inline-block';
         }
-    }
 
-    class HalftoneBitmapCamera extends BaseHalftoneElement {
-
-        get naturalSize() {
-            return {
-                width: this.videoEl.videoWidth,
-                height: this.videoEl.videoHeight
-            };
-        }
-
-        constructor() {
-            super();
-
-            /**
-             * width of component
-             * @type {int}
-             * @default 0
-             */
-            this.width = 0;
-
-            /**
-             * height of component
-             * @type {int}
-             * @default 0
-             */
-            this.height = 0;
-
-            /**
-             * left offset for letterbox of video
-             * @type {int}
-             * @default 0
-             */
-            this.letterBoxLeft = 0;
-
-            /**
-             * top offset for letterbox of video
-             * @type {int}
-             * @default 0
-             */
-            this.letterBoxTop = 0;
-
-            /**
-             * aspect ratio of video
-             * @type {number}
-             */
-            this.aspectRatio = 0;
-
-            /**
-             * visible area bounding box
-             * whether letterboxed or cropped, will report visible video area
-             * does not include positioning in element, so if letterboxing, x and y will be reported as 0
-             * @type {{x: number, y: number, width: number, height: number}}
-             */
-            this.visibleMediaRect = { x: 0, y: 0, width: 0, height: 0 };
-
-
-            this.videoEl = document.createElement('video');
-            this.videoEl.width = 640;
-            this.videoEl.height = 480;
-
-            this.canvasEl = document.createElement('canvas');
-            this.videoEl.onloadedmetadata = event => this.onMetadata(event);
-            this.videoEl.onplaying = () => {
-                this.createRenderer(this.videoEl);
-                this.renderer.init();
-                setInterval( () => {
-                    this.render();
-                }, 150);
-            };
-        }
-
-        onMetadata() {
-            this.aspectRatio = this.videoEl.videoWidth / this.videoEl.videoHeight;
-            this.canvasEl.setAttribute('width', this.videoEl.videoWidth);
-            this.canvasEl.setAttribute('height', this.videoEl.videoHeight);
-            // this.resize();
-        }
-
-        connectedCallback() {
-            super.connectedCallback();
-            this.domRoot.appendChild(this.canvasEl);
-            this.startCamera();
-        }
-
-        render() {
-            if (this.renderer) {
-                const bgColor = this.hasAttribute('backgroundcolor') ? this.getAttribute('backgroundcolor') : 'white';
-                const fillColor = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
-                this.renderer.outputCanvasContext.fillStyle = bgColor;
-                this.renderer.outputCanvasContext.beginPath();
-                this.renderer.outputCanvasContext.rect(0, 0, this.renderer.w, this.renderer.h );
-                this.renderer.outputCanvasContext.fill();
-
-                this.renderer.outputCanvasContext.fillStyle = fillColor;
-                this.renderer.render(true);
+        cleanup() {
+            if (this._timer) {
+                clearInterval(this._timer);
+                this._timer = undefined;
             }
-        }
-
-        async startCamera() {
-            this._stream = await navigator.mediaDevices.getUserMedia({
-                'audio': false,
-                'video': {
-                    width: this.width,
-                    height: this.height,
-                },
-            });
-            this.videoEl.srcObject = this._stream;
-            this.videoEl.play();
-        }
-
-        /**
-         * update canvas dimensions when resized
-         * @private
-         */
-        resize() {
-            const bounds = this.getBoundingClientRect();
-            if (bounds.width === 0 || bounds.height === 0) {
-                return;
-            }
-
-            this.mediaScaledWidth = bounds.width;
-            this.mediaScaledHeight = bounds.height;
-            const componentAspectRatio = bounds.width/bounds.height;
-
-            // calculate letterbox borders
-            if (componentAspectRatio < this.aspectRatio) {
-                this.mediaScaledHeight = bounds.width / this.aspectRatio;
-                this.letterBoxTop = bounds.height/2 - this.mediaScaledHeight/2;
-                this.letterBoxLeft = 0;
-            } else if (componentAspectRatio > this.aspectRatio) {
-                this.mediaScaledWidth = bounds.height * this.aspectRatio;
-                this.letterBoxLeft = bounds.width/2 - this.mediaScaledWidth/2;
-                this.letterBoxTop = 0;
-            } else {
-                this.letterBoxTop = 0;
-                this.letterBoxLeft = 0;
-            }
-
-            this.visibleMediaRect.x = this.letterBoxLeft;
-            this.visibleMediaRect.y = this.letterBoxTop;
-            this.visibleMediaRect.width = this.mediaScaledWidth;
-            this.visibleMediaRect.height = this.mediaScaledHeight;
-
-            // set video to component size
-            this.videoEl.setAttribute('width', this.mediaScaledWidth);
-            this.videoEl.setAttribute('height', this.mediaScaledHeight);
-            this.videoEl.style.left = `${this.letterBoxLeft}px`;
-            this.videoEl.style.top = `${this.letterBoxTop}px`;
-        };
-
-        disconnectedCallback() {
-            clearInterval(this.timer);
-            this._connected = false;
             if (this._stream) {
                 const tracks = this._stream.getTracks();
                 tracks.forEach( track => {
                     track.stop();
                 });
+                this._stream = undefined;
             }
         }
-
-        attributeChangedCallback(name, oldValue, newValue) {
-            super.attributeChangedCallback(name, oldValue, newValue);
-            /* switch (name) {
-                case 'backgroundcolor': {
-                    if (this.svgEl) {
-                        this.svgEl.style.backgroundColor = newValue;
-                    }
-                    break;
-                }
-
-                case 'shapecolor': {
-                    if (this.svgEl) {
-                        this.svgEl.style.fill = newValue;
-                    }
-                    break;
-                }
-            } */
-        }
-
-        createRendererOptions() {
-            const opts = super.createRendererOptions();
-            opts.inputSource = this.videoEl;
-            opts.outputCanvas = this.canvasEl;
-            opts.renderer = 'canvas';
-            return opts;
-        }
-    }
-
-    if (!customElements.get('halftone-bitmap-camera')) {
-        customElements.define('halftone-bitmap-camera', HalftoneBitmapCamera);
     }
 
     class HalftoneBitmapImage extends BaseHalftoneElement {
@@ -1745,17 +1624,21 @@ var Halftone = (function (exports) {
             this.domRoot.appendChild(this.halftoneSurface);
         }
 
+        resize() {
+            const modified = super.resize();
+            if (modified) {
+                this.renderer.setCanvasOutputSize(this.visibleRect.width, this.visibleRect.height);
+            }
+            return modified;
+        }
+
         render() {
             if (this.renderer && this.renderer.isSourceReady) {
-                const modified = this.resize();
-                if (modified) {
-                    this.renderer.setCanvasOutputSize(this.visibleRect.width, this.visibleRect.height);
-                }
                 this.renderer.outputCanvasContext.clearRect(0, 0, this.renderer.outputCanvas.width, this.renderer.outputCanvas.height);
                 const fillColor = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
 
                 this.renderer.outputCanvasContext.fillStyle = fillColor;
-                this.renderer.render();
+                this.renderer.render(this.getAttribute('src') === 'camera');
             }
         }
 
@@ -1787,191 +1670,6 @@ var Halftone = (function (exports) {
         customElements.define('halftone-bitmap-image', HalftoneBitmapImage);
     }
 
-    class HalftoneSVGCamera extends BaseHalftoneElement {
-
-        get naturalSize() {
-            return {
-                width: this.videoEl.videoWidth,
-                height: this.videoEl.videoHeight
-            };
-        }
-
-        constructor() {
-            super();
-
-            /**
-             * width of component
-             * @type {int}
-             * @default 0
-             */
-            this.width = 0;
-
-            /**
-             * height of component
-             * @type {int}
-             * @default 0
-             */
-            this.height = 0;
-
-            /**
-             * left offset for letterbox of video
-             * @type {int}
-             * @default 0
-             */
-            this.letterBoxLeft = 0;
-
-            /**
-             * top offset for letterbox of video
-             * @type {int}
-             * @default 0
-             */
-            this.letterBoxTop = 0;
-
-            /**
-             * aspect ratio of video
-             * @type {number}
-             */
-            this.aspectRatio = 0;
-
-            /**
-             * visible area bounding box
-             * whether letterboxed or cropped, will report visible video area
-             * does not include positioning in element, so if letterboxing, x and y will be reported as 0
-             * @type {{x: number, y: number, width: number, height: number}}
-             */
-            this.visibleMediaRect = { x: 0, y: 0, width: 0, height: 0 };
-
-
-            this.videoEl = document.createElement('video');
-            this.videoEl.width = 640;
-            this.videoEl.height = 480;
-
-            this.svgEl = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-            this.videoEl.onloadedmetadata = event => this.onMetadata(event);
-            this.videoEl.onplaying = () => {
-                this.createRenderer(this.videoEl);
-                this.renderer.init();
-                setInterval( () => {
-                    this.render();
-                }, 100);
-            };
-        }
-
-        onMetadata() {
-            this.aspectRatio = this.videoEl.videoWidth / this.videoEl.videoHeight;
-            this.svgEl.setAttribute('width', this.videoEl.videoWidth);
-            this.svgEl.setAttribute('height', this.videoEl.videoHeight);
-            // this.resize();
-        }
-
-        connectedCallback() {
-            super.connectedCallback();
-            this.domRoot.appendChild(this.svgEl);
-            this.startCamera();
-        }
-
-        render() {
-            if (this.renderer) {
-                this.svgEl.innerHTML = `<g transform="scale(1, 1)">
-                                        <path d="${this.renderer.render(true)}"></path>
-                                    </g></svg>`;
-            }
-        }
-
-        async startCamera() {
-            this._stream = await navigator.mediaDevices.getUserMedia({
-                'audio': false,
-                'video': {
-                    width: this.width,
-                    height: this.height,
-                },
-            });
-            this.videoEl.srcObject = this._stream;
-            this.videoEl.play();
-        }
-
-        /**
-         * update canvas dimensions when resized
-         * @private
-         */
-        resize() {
-            const bounds = this.getBoundingClientRect();
-            if (bounds.width === 0 || bounds.height === 0) {
-                return;
-            }
-
-            this.mediaScaledWidth = bounds.width;
-            this.mediaScaledHeight = bounds.height;
-            const componentAspectRatio = bounds.width/bounds.height;
-
-            // calculate letterbox borders
-            if (componentAspectRatio < this.aspectRatio) {
-                this.mediaScaledHeight = bounds.width / this.aspectRatio;
-                this.letterBoxTop = bounds.height/2 - this.mediaScaledHeight/2;
-                this.letterBoxLeft = 0;
-            } else if (componentAspectRatio > this.aspectRatio) {
-                this.mediaScaledWidth = bounds.height * this.aspectRatio;
-                this.letterBoxLeft = bounds.width/2 - this.mediaScaledWidth/2;
-                this.letterBoxTop = 0;
-            } else {
-                this.letterBoxTop = 0;
-                this.letterBoxLeft = 0;
-            }
-
-            this.visibleMediaRect.x = this.letterBoxLeft;
-            this.visibleMediaRect.y = this.letterBoxTop;
-            this.visibleMediaRect.width = this.mediaScaledWidth;
-            this.visibleMediaRect.height = this.mediaScaledHeight;
-
-            // set video to component size
-            this.videoEl.setAttribute('width', this.mediaScaledWidth);
-            this.videoEl.setAttribute('height', this.mediaScaledHeight);
-            this.videoEl.style.left = `${this.letterBoxLeft}px`;
-            this.videoEl.style.top = `${this.letterBoxTop}px`;
-        };
-
-        disconnectedCallback() {
-            clearInterval(this.timer);
-            this._connected = false;
-            if (this._stream) {
-                const tracks = this._stream.getTracks();
-                tracks.forEach( track => {
-                    track.stop();
-                });
-            }
-        }
-
-        attributeChangedCallback(name, oldValue, newValue) {
-            super.attributeChangedCallback(name, oldValue, newValue);
-            switch (name) {
-                case 'backgroundcolor': {
-                    if (this.svgEl) {
-                        this.svgEl.style.backgroundColor = newValue;
-                    }
-                    break;
-                }
-
-                case 'shapecolor': {
-                    if (this.svgEl) {
-                        this.svgEl.style.fill = newValue;
-                    }
-                    break;
-                }
-            }
-        }
-
-        createRendererOptions() {
-            const opts = super.createRendererOptions();
-            opts.inputSource = this.videoEl;
-            opts.renderer = 'svgpath';
-            return opts;
-        }
-    }
-
-    if (!customElements.get('halftone-svg-camera')) {
-        customElements.define('halftone-svg-camera', HalftoneSVGCamera);
-    }
-
     class HalftoneSVGImage extends BaseHalftoneElement {
         connectedCallback() {
             super.connectedCallback();
@@ -1983,10 +1681,9 @@ var Halftone = (function (exports) {
          * @param dorender - default true, allow not invoking the underlying render function
          */
         render(dorender = true) {
-            this.resize();
             if (this.renderer && this.renderer.isSourceReady) {
                 if (dorender) {
-                    this.cachedSVGPath = this.renderer.render();
+                    this.cachedSVGPath = this.renderer.render( this.getAttribute('src') === 'camera');
                 }
                 this.halftoneSurface.innerHTML = this.svgPathWithTransformGroup;
             }
@@ -2048,9 +1745,7 @@ var Halftone = (function (exports) {
 
     var index = /*#__PURE__*/Object.freeze({
         __proto__: null,
-        HalftoneBitmapCamera: HalftoneBitmapCamera,
         HalftoneBitmapImage: HalftoneBitmapImage,
-        HalftoneSVGCamera: HalftoneSVGCamera,
         HalftoneSVGImage: HalftoneSVGImage
     });
 
