@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        halftone-svg-image {
+        halftone-bitmap-image {
             width: 900px;
             height: 600px;
             background-color: #cdcdcd;
@@ -17,11 +17,10 @@
         dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
     </script>
     <script src="demo.js"></script>
-    <title>Halftone SVG Image</title>
+    <title>Halftone Bitmap Image</title>
 </head>
 <body>
-    <button onclick="downloadSVG()">Download SVG</button>
-    <button onclick="downloadImageSVG()">Download Image</button>
+    <button onclick="downloadImageCanvas()">Download Image</button>
 
     <br />
     <br />
@@ -35,6 +34,11 @@
     <label for="distancebetween">Choose a distance between shapes:</label>
     <input type="range" name="distancebetween" id="distancebetween" min="1" max="50" value="7" oninput="changeDistance(event)"></input>
 
+    <br />
+    <br />
+
+    <label for="refreshrate">When using webcam, how many milliseconds between refreshes:</label>
+    <input type="range" name="refreshrate" id="refreshrate" min="25" max="500" value="150" oninput="changeRefreshRate(event)"></input>
 
     <br />
     <br />
@@ -74,6 +78,7 @@
         <option>sampleimages/astronaut.jpg</option>
         <option>sampleimages/obama.jpeg</option>
         <option>sampleimages/thirtyrock.jpeg</option>
+        <option>camera</option>
     </select>
     <input type="file" id="halftoneimage" onchange="uploadSrcImage(event)" name="img" accept="image/*">
 
@@ -103,8 +108,8 @@
     <br />
     <br />
 
-    <halftone-svg-image id="halftone" shapetype="altcircles" src="./sampleimages/astronaut.jpg">
-        <div id="bgimage" style="width: 100%; height: 100%; background-size: cover; background-position: center"></div>
-    </halftone-svg-image>
+    <halftone-bitmap-image id="halftone" shapetype="altcircles" src="./sampleimages/astronaut.jpg">
+        <div id="bgimage" style="width: 100%; height: 100%"></div>
+    </halftone-bitmap-image>
 </body>
 </html>
