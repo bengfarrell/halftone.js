@@ -1,6 +1,13 @@
 let backgroundImage;
 let blendMode = 'normal';
 
+document.addEventListener('DOMContentLoaded', (event) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('camera')) {
+        document.getElementById('halftone').setAttribute('src', 'camera');
+    }
+});
+
 function changeShape(event) {
     document.getElementById('halftone').setAttribute('shapetype', event.target.value);
 
@@ -101,6 +108,10 @@ function changeCrossSize(event) {
 
 function changeFillColor(event) {
     document.getElementById('halftone').setAttribute('shapecolor', event.target.value);
+}
+
+function changeRefreshRate(event) {
+    document.getElementById('halftone').setAttribute('refreshrate', event.target.value);
 }
 
 function changeBackgroundColor(event) {

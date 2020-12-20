@@ -10,8 +10,8 @@
         }
     </style>
     <script type="module">
-        // import * as Halftone from '../index.js';
-        import * as Halftone from './halftone.js';
+        import * as Halftone from '../index.js';
+        // import * as Halftone from './halftone.js';
 
         const dropdown = document.getElementById('shaperenderers');
         dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
@@ -34,6 +34,11 @@
     <label for="distancebetween">Choose a distance between shapes:</label>
     <input type="range" name="distancebetween" id="distancebetween" min="1" max="50" value="7" oninput="changeDistance(event)"></input>
 
+    <br />
+    <br />
+
+    <label for="refreshrate">When using webcam, how many milliseconds between refreshes:</label>
+    <input type="range" name="refreshrate" id="refreshrate" min="25" max="500" value="150" oninput="changeRefreshRate(event)"></input>
 
     <br />
     <br />
@@ -73,6 +78,7 @@
         <option>sampleimages/astronaut.jpg</option>
         <option>sampleimages/obama.jpeg</option>
         <option>sampleimages/thirtyrock.jpeg</option>
+        <option>camera</option>
     </select>
     <input type="file" id="halftoneimage" onchange="uploadSrcImage(event)" name="img" accept="image/*">
 

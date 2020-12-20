@@ -9,6 +9,7 @@ export class BaseHalftoneElement extends HTMLElement {
         'distance',
         'crossbarlength',
         'shapecolor',
+        'refreshrate',
         'blendmode' ];
     }
 
@@ -74,11 +75,21 @@ export class BaseHalftoneElement extends HTMLElement {
          */
         this.halftoneSurface = undefined;
 
+        /**
+         * refresh rate for input sources that change (like video)
+         */
+        this.refreshRate = 150;
+
         this.createBackgroundSlot();
         this.createRenderer();
 
         if (this.getAttribute('src')) {
-            this.loadImage(this.getAttribute('src'));
+            const source = this.getAttribute('src');
+            if (source === 'camera') {
+                this.startCamera();
+            } else {
+                this.loadImage(source);
+            }
         }
     }
 
@@ -178,16 +189,55 @@ export class BaseHalftoneElement extends HTMLElement {
                 return;
 
             case 'src':
-                this.loadImage(newValue);
+                this.cleanup();
+                if (newValue === 'camera') {
+                    this.startCamera();
+                } else {
+                    this.loadImage(newValue);
+                }
                 break;
 
             case 'blendmode':
                 this.halftoneSurface.style['mix-blend-mode'] = newValue;
                 break;
+
+            case 'refreshrate':
+                this.refreshRate = newValue;
+                if (this._timer) {
+                    clearInterval(this._timer);
+                    this._timer = setInterval( () => {
+                        this.render();
+                    }, this.refreshRate);
+                }
         }
     }
 
     render() {}
+
+    async startCamera() {
+        this.inputSource = document.createElement('video');
+        this._stream = await navigator.mediaDevices.getUserMedia({
+            'audio': false,
+            'video': {
+                width: this.width,
+                height: this.height,
+            },
+        });
+
+        this.inputSource.onloadedmetadata = event => {
+            this.renderer.input = this.inputSource;
+            this.resize();
+        }
+
+        this.inputSource.onplaying = () => {
+            this._timer = setInterval( () => {
+                this.render();
+            }, this.refreshRate);
+        }
+
+        this.inputSource.srcObject = this._stream;
+        this.inputSource.play();
+    }
 
     createRendererOptions() {
         const opts = { inputSource: this.inputSource };
@@ -206,5 +256,19 @@ export class BaseHalftoneElement extends HTMLElement {
         this.backgroundSlot = document.createElement('slot');
         this.backgroundSlot.style.position = 'absolute';
         this.backgroundSlot.style.display = 'inline-block';
+    }
+
+    cleanup() {
+        if (this._timer) {
+            clearInterval(this._timer);
+            this._timer = undefined;
+        }
+        if (this._stream) {
+            const tracks = this._stream.getTracks();
+            tracks.forEach( track => {
+                track.stop();
+            });
+            this._stream = undefined;
+        }
     }
 }

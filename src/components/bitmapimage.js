@@ -22,7 +22,7 @@ export class HalftoneBitmapImage extends BaseHalftoneElement {
             const fillColor = this.hasAttribute('shapecolor') ? this.getAttribute('shapecolor') : 'black';
 
             this.renderer.outputCanvasContext.fillStyle = fillColor;
-            this.renderer.render();
+            this.renderer.render(this.getAttribute('src') === 'camera');
         }
     }
 

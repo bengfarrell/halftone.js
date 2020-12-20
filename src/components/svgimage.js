@@ -13,7 +13,7 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
     render(dorender = true) {
         if (this.renderer && this.renderer.isSourceReady) {
             if (dorender) {
-                this.cachedSVGPath = this.renderer.render();
+                this.cachedSVGPath = this.renderer.render( this.getAttribute('src') === 'camera');
             }
             this.halftoneSurface.innerHTML = this.svgPathWithTransformGroup;
         }

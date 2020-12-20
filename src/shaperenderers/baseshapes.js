@@ -115,8 +115,7 @@ export default class BaseShapes {
         if (!this.height) {
             return false;
         }
-
-        return this.inputSource.complete;
+        return true;
     }
 
     preInit() {}
@@ -143,9 +142,8 @@ export default class BaseShapes {
      */
     set input(src) {
         this.inputSource = src;
-        this.width = this.inputSource.width;
-        this.height = this.inputSource.height;
-
+        this.width = this.inputSource.width | this.inputSource.videoWidth;
+        this.height = this.inputSource.height | this.inputSource.videoHeight;
         if (this.isSourceReady) {
             this.init();
         }
@@ -203,13 +201,11 @@ export default class BaseShapes {
         }
         this.dots = [];
         this.buckets = [];
-        this.w = this.inputSource.width;
-        this.h = this.inputSource.height;
-        this.m = Math.max(this.w, this.h);
+        this.m = Math.max(this.width, this.height);
         this.div = Math.max(1, this.m / 1000);
         this.scale = this.opts.distanceBetween / 3;
-        this.W = Math.round(this.w / this.div / this.scale);
-        this.H = Math.round(this.h / this.div / this.scale);
+        this.W = Math.round(this.width / this.div / this.scale);
+        this.H = Math.round(this.height / this.div / this.scale);
         this.A = this.opts.distanceBetween / this.scale;
         this.aspectRatio = this.width / this.height;
 
@@ -220,7 +216,7 @@ export default class BaseShapes {
         this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
 
         if (this.opts.renderer === 'canvas') {
-            this.setCanvasOutputSize(this.opts.outputSize.width || this.w,this.opts.outputSize.height || this.h);
+            this.setCanvasOutputSize(this.opts.outputSize.width || this.width,this.opts.outputSize.height || this.height);
         }
 
         if (benchmark) {
@@ -307,8 +303,8 @@ export default class BaseShapes {
 
             case 'svg':
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-                svg.setAttribute('width', this.w);
-                svg.setAttribute('height', this.h);
+                svg.setAttribute('width', this.width);
+                svg.setAttribute('height', this.height);
                 svg.innerHTML = `<path d="${this.renderSVGPath()}"></path>`;
                 output = svg;
                 break;
@@ -330,7 +326,7 @@ export default class BaseShapes {
     }
 
     renderSVGPath() {
-        const outputScaling = { x: this.w / ( this.W * this.scale ), y: this.h / ( this.H * this.scale) };
+        const outputScaling = { x: this.width / ( this.W * this.scale ), y: this.height / ( this.H * this.scale) };
         const path = [];
         this.dots.forEach(dot => {
             if (!dot.v) {
