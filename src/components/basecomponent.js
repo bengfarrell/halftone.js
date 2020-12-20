@@ -241,6 +241,9 @@ export class BaseHalftoneElement extends HTMLElement {
 
     createRendererOptions() {
         const opts = { inputSource: this.inputSource };
+        if (this.hasAttribute('benchmark')) {
+            opts.benchmark = true;
+        }
         if (this.hasAttribute('distance')) {
             opts.distanceBetween = Number(this.getAttribute('distance'));
         }

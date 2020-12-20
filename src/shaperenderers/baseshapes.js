@@ -216,7 +216,7 @@ export default class BaseShapes {
         this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
 
         if (this.opts.renderer === 'canvas') {
-            this.setCanvasOutputSize(this.opts.outputSize.width || this.width,this.opts.outputSize.height || this.height);
+            this.setCanvasOutputSize(this.opts.outputSize ? this.opts.outputSize.width : this.width,this.opts.outputSize? this.opts.outputSize.height : this.height);
         }
 
         if (benchmark) {
@@ -255,7 +255,7 @@ export default class BaseShapes {
 
         let benchmark;
         if (this.opts.benchmark) {
-            benchmark = { start: Date.now(), title: 'render' };
+            benchmark = { start: Date.now(), title: 'calculate' };
         }
 
         for (let y = 0; y < this.H; y++) {
@@ -292,7 +292,7 @@ export default class BaseShapes {
         if (benchmark) {
             benchmark.end = Date.now();
             this.benchmarking.push(benchmark);
-            benchmark = { start: Date.now(), title: 'output' }
+            benchmark = { start: Date.now(), title: 'render' }
         }
 
         let output;
