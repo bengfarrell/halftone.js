@@ -150,7 +150,7 @@ export class BaseHalftoneElement extends HTMLElement {
         this.backgroundSlot.style.width = `${this.visibleRect.width}px`;
         this.backgroundSlot.style.height = `${this.visibleRect.height}px`;
         this.backgroundSlot.style.top = `${this.visibleRect.y}px`;
-        this.backgroundSlot.style.left = `${this.visibleRect.xt}px`;
+        this.backgroundSlot.style.left = `${this.visibleRect.x}px`;
 
         this.halftoneSurface.style.top = this.visibleRect.y + 'px';
         this.halftoneSurface.style.left = this.visibleRect.x + 'px';
