@@ -1,5 +1,6 @@
 let backgroundImage;
 let blendMode = 'normal';
+let timer;
 
 document.addEventListener('DOMContentLoaded', (event) => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -99,15 +100,30 @@ function downloadCanvasAsImage(canvas) {
 }
 
 function changeDistance(event) {
-    document.getElementById('halftone').setAttribute('distance', event.target.value);
+    if (timer) {
+        clearTimeout(timer);
+    }
+    setTimeout( () => {
+        document.getElementById('halftone').setAttribute('distance', event.target.value);
+    }, 500);
 }
 
 function changeCrossSize(event) {
-    document.getElementById('halftone').setAttribute('crossbarlength', event.target.value);
+    if (timer) {
+        clearTimeout(timer);
+    }
+    setTimeout( () => {
+        document.getElementById('halftone').setAttribute('crossbarlength', event.target.value);
+    }, 500);
 }
 
 function changeFillColor(event) {
-    document.getElementById('halftone').setAttribute('shapecolor', event.target.value);
+    if (timer) {
+        clearTimeout(timer);
+    }
+    setTimeout( () => {
+        document.getElementById('halftone').setAttribute('shapecolor', event.target.value);
+    }, 500);
 }
 
 function changeRefreshRate(event) {
@@ -115,7 +131,12 @@ function changeRefreshRate(event) {
 }
 
 function changeBackgroundColor(event) {
-    document.getElementById('bgimage').style.backgroundColor = event.target.value;
+    if (timer) {
+        clearTimeout(timer);
+    }
+    setTimeout( () => {
+        document.getElementById('bgimage').style.backgroundColor = event.target.value;
+    }, 500);s
 }
 
 function changeBGImage(event) {

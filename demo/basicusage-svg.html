@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Basics</title>
+    <title>Basic Usage: SVG Output</title>
 
     <script type="module">
-        // import * as Halftone from ../index.js';
+        // import * as Halftone from '../index.js';
         import * as Halftone from './halftone.js';
 
         console.log('Available shape types: ', Halftone.RenderShapeTypes);
-        const htoneRenderer = Halftone.RendererFactory('circles', { renderer: 'svg', benchmark: true, distanceBetween: 20 });
+        const htoneRenderer = Halftone.RendererFactory('circles', { renderer: 'svg', benchmark: true, distanceBetween: 7 });
         htoneRenderer.loadImage('./sampleimages/astronaut.jpg').then( () => {
             document.body.appendChild(htoneRenderer.render());
         });

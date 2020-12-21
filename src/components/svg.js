@@ -1,6 +1,6 @@
 import { BaseHalftoneElement } from './basecomponent';
 
-export class HalftoneSVGImage extends BaseHalftoneElement {
+export class HalftoneSVG extends BaseHalftoneElement {
     connectedCallback() {
         super.connectedCallback();
         this.domRoot.appendChild(this.halftoneSurface);
@@ -69,6 +69,6 @@ export class HalftoneSVGImage extends BaseHalftoneElement {
     }
 }
 
-if (!customElements.get('halftone-svg-image')) {
-    customElements.define('halftone-svg-image', HalftoneSVGImage);
+if (!customElements.get('halftone-svg')) {
+    customElements.define('halftone-svg', HalftoneSVG);
 }

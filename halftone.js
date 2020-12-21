@@ -229,7 +229,7 @@ var Halftone = (function (exports) {
             this.inputData = this.bufferContext.getImageData(0, 0, this.W, this.H).data;
 
             if (this.opts.renderer === 'canvas') {
-                this.setCanvasOutputSize(this.opts.outputSize.width || this.width,this.opts.outputSize.height || this.height);
+                this.setCanvasOutputSize(this.opts.outputSize ? this.opts.outputSize.width : this.width,this.opts.outputSize? this.opts.outputSize.height : this.height);
             }
 
             if (benchmark) {
@@ -268,7 +268,7 @@ var Halftone = (function (exports) {
 
             let benchmark;
             if (this.opts.benchmark) {
-                benchmark = { start: Date.now(), title: 'render' };
+                benchmark = { start: Date.now(), title: 'calculate' };
             }
 
             for (let y = 0; y < this.H; y++) {
@@ -289,23 +289,28 @@ var Halftone = (function (exports) {
                         this.buckets[X + 1] ? this.buckets[X + 1][Y - 1] || [] : [],
                         this.buckets[X + 1] ? this.buckets[X + 1][Y + 1] || [] : []
                     );
-                    theDots.forEach(dot => {
-                        const d = (dot.x - x) ** 2 + (dot.y - y) ** 2;
+                    for (let dt = 0; dt < theDots.length; dt++) {
+                        const d = (theDots[dt].x - x) ** 2 + (theDots[dt].y - y) ** 2;
                         if (d < closest) {
                             closest = d;
-                            theDot = this.dots[dot.i];
+                            theDot = this.dots[theDots[dt].i];
                         }
-                    });
+                    }
                     theDot.v = theDot.v || [];
                     const green = this.inputData[i + 1] || 0;
-                    theDot.v.push(this.opts.inverse ? green : 255 - green);
+                    if (this.opts.inverse === true) {
+                        theDot.v.push(green);
+                    }
+                    if (!this.opts.inverse) {
+                        theDot.v.push(255 - green);
+                    }
                 }
             }
 
             if (benchmark) {
                 benchmark.end = Date.now();
                 this.benchmarking.push(benchmark);
-                benchmark = { start: Date.now(), title: 'output' };
+                benchmark = { start: Date.now(), title: 'render' };
             }
 
             let output;
@@ -1584,6 +1589,9 @@ var Halftone = (function (exports) {
 
         createRendererOptions() {
             const opts = { inputSource: this.inputSource };
+            if (this.hasAttribute('benchmark')) {
+                opts.benchmark = true;
+            }
             if (this.hasAttribute('distance')) {
                 opts.distanceBetween = Number(this.getAttribute('distance'));
             }
@@ -1616,7 +1624,7 @@ var Halftone = (function (exports) {
         }
     }
 
-    class HalftoneBitmapImage extends BaseHalftoneElement {
+    class HalftoneBitmap extends BaseHalftoneElement {
         static get rendererType() { return 'canvas'; }
 
         connectedCallback() {
@@ -1666,11 +1674,11 @@ var Halftone = (function (exports) {
         }
     }
 
-    if (!customElements.get('halftone-bitmap-image')) {
-        customElements.define('halftone-bitmap-image', HalftoneBitmapImage);
+    if (!customElements.get('halftone-bitmap')) {
+        customElements.define('halftone-bitmap', HalftoneBitmap);
     }
 
-    class HalftoneSVGImage extends BaseHalftoneElement {
+    class HalftoneSVG extends BaseHalftoneElement {
         connectedCallback() {
             super.connectedCallback();
             this.domRoot.appendChild(this.halftoneSurface);
@@ -1739,14 +1747,14 @@ var Halftone = (function (exports) {
         }
     }
 
-    if (!customElements.get('halftone-svg-image')) {
-        customElements.define('halftone-svg-image', HalftoneSVGImage);
+    if (!customElements.get('halftone-svg')) {
+        customElements.define('halftone-svg', HalftoneSVG);
     }
 
     var index = /*#__PURE__*/Object.freeze({
         __proto__: null,
-        HalftoneBitmapImage: HalftoneBitmapImage,
-        HalftoneSVGImage: HalftoneSVGImage
+        HalftoneBitmap: HalftoneBitmap,
+        HalftoneSVG: HalftoneSVG
     });
 
     exports.Components = index;

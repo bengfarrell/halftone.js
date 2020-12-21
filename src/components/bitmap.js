@@ -1,6 +1,6 @@
 import { BaseHalftoneElement } from './basecomponent';
 
-export class HalftoneBitmapImage extends BaseHalftoneElement {
+export class HalftoneBitmap extends BaseHalftoneElement {
     static get rendererType() { return 'canvas'; }
 
     connectedCallback() {
@@ -50,6 +50,6 @@ export class HalftoneBitmapImage extends BaseHalftoneElement {
     }
 }
 
-if (!customElements.get('halftone-bitmap-image')) {
-    customElements.define('halftone-bitmap-image', HalftoneBitmapImage);
+if (!customElements.get('halftone-bitmap')) {
+    customElements.define('halftone-bitmap', HalftoneBitmap);
 }

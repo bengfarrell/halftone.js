@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        halftone-bitmap-image {
+        halftone-bitmap {
             width: 900px;
             height: 600px;
             background-color: #cdcdcd;
         }
     </style>
     <script type="module">
-        import * as Halftone from '../index.js';
-        // import * as Halftone from './halftone.js';
+        // import * as Halftone from '../index.js';
+        import * as Halftone from './halftone.js';
 
         const dropdown = document.getElementById('shaperenderers');
         dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
@@ -108,8 +108,8 @@
     <br />
     <br />
 
-    <halftone-bitmap-image id="halftone" shapetype="altcircles" src="./sampleimages/astronaut.jpg">
+    <halftone-bitmap id="halftone" shapetype="altcircles" src="./sampleimages/astronaut.jpg">
         <div id="bgimage" style="width: 100%; height: 100%"></div>
-    </halftone-bitmap-image>
+    </halftone-bitmap>
 </body>
 </html>

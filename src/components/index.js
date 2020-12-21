@@ -1,2 +1,2 @@
-export * from './bitmapimage';
-export * from './svgimage';
+export * from './bitmap.js';
+export * from './svg.js';

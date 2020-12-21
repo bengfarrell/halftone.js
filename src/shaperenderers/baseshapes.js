@@ -276,16 +276,21 @@ export default class BaseShapes {
                     this.buckets[X + 1] ? this.buckets[X + 1][Y - 1] || [] : [],
                     this.buckets[X + 1] ? this.buckets[X + 1][Y + 1] || [] : []
                 );
-                theDots.forEach(dot => {
-                    const d = (dot.x - x) ** 2 + (dot.y - y) ** 2;
+                for (let dt = 0; dt < theDots.length; dt++) {
+                    const d = (theDots[dt].x - x) ** 2 + (theDots[dt].y - y) ** 2;
                     if (d < closest) {
                         closest = d;
-                        theDot = this.dots[dot.i];
+                        theDot = this.dots[theDots[dt].i];
                     }
-                });
+                }
                 theDot.v = theDot.v || [];
                 const green = this.inputData[i + 1] || 0;
-                theDot.v.push(this.opts.inverse ? green : 255 - green);
+                if (this.opts.inverse === true) {
+                    theDot.v.push(green);
+                }
+                if (!this.opts.inverse) {
+                    theDot.v.push(255 - green);
+                }
             }
         }
 
