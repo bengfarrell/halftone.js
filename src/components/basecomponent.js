@@ -115,8 +115,8 @@ export class BaseHalftoneElement extends HTMLElement {
             return false;
         }
 
-        if (bounds.width === this.componentWidth ||
-            bounds.height === this.componentHeight ||
+        if (bounds.width === this.componentWidth &&
+            bounds.height === this.componentHeight &&
             this.sourceAspectRatio === this.renderer.aspectRatio) {
             return false;
         }
