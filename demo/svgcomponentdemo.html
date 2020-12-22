@@ -19,6 +19,8 @@
     <script src="demo.js"></script>
     <title>Halftone SVG Image</title>
 </head>
+
+
 <body>
     <button onclick="downloadSVG()">Download SVG</button>
     <button onclick="downloadImageSVG()">Download Image</button>
@@ -58,6 +60,9 @@
 
     <input type="color" name="fillcolor" id="fillcolor" oninput="changeFillColor(event)"></input>
     <label for="fillcolor"> Choose a shape color </label>
+        <br />
+        <br />
+
     <input type="color" name="backgroundcolor" id="backgroundcolor" value="#ffffff" oninput="changeBackgroundColor(event)"></input>
     <label for="backgroundcolor"> Choose a background color (not seen if using an image)</label>
 
@@ -89,7 +94,7 @@
     <br />
     <br />
 
-    <label for="blendmode">Choose a blend mode</label>
+    <label for="blendmode">Choose a blend mode</label>  
     <select name="blendmode" id="blendmode" onchange="changeBlendMode(event)">
         <option>normal</option>
         <option>multiply</option>
@@ -112,7 +117,7 @@
     <br />
     <br />
 
-    <halftone-svg id="halftone" shapetype="altcircles" src="./sampleimages/astronaut.jpg">
+    <halftone-svg id="halftone" shapetype="circles" src="./sampleimages/astronaut.jpg">
         <div id="bgimage" style="width: 100%; height: 100%; background-size: cover; background-position: center"></div>
     </halftone-svg>
 </body>
