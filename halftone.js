@@ -1513,6 +1513,7 @@ var Halftone = (function (exports) {
             }
 
             this.domRoot.appendChild(this.backgroundSlot);
+            this.resize();
         }
 
         attributeChangedCallback(name, oldValue, newValue) {

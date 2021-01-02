@@ -165,6 +165,7 @@ export class BaseHalftoneElement extends HTMLElement {
         }
 
         this.domRoot.appendChild(this.backgroundSlot);
+        this.resize();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
