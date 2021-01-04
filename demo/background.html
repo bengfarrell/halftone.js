@@ -12,25 +12,43 @@
     <script type="module">
         // import * as Halftone from '../index.js';
         import * as Halftone from './halftone.js';
-
+        //
         const dropdown = document.getElementById('shaperenderers');
         dropdown.innerHTML = Halftone.RenderShapeTypes.map( (type) => `<option>${type}</option>`).join();
     </script>
+
     <script src="demo.js"></script>
     <title>Halftone SVG Image</title>
 </head>
 <body>
-    <h1> DeYoung Art Party 2021 </h1>
-    <button onclick="location.href = 'TestPageUZ.html';">Go to Test Page</button>
-    <button onclick="downloadSVG()">Download SVG</button>
-    <button onclick="downloadImageSVG()">Download Image</button>
 
-
+    <button onclick="location.href = 'foreground.html';">Return</button>
     <br />
     <br />
+    <h2>Step 2 - Set the background image</h2>
+<!-- 
 
-    <label for="shaperenderers">Choose a shape renderer:</label>
+    <label for="halftoneimage">Choose a halftone image</label>
+    <select name="halftoneimage" id="halftoneimage" onchange="changeSrcImage(event)">
+        <option>sampleimages/astronaut.jpg</option>
+        <option>sampleimages/obama.jpeg</option>
+        <option>sampleimages/thirtyrock.jpeg</option>
+        <option>camera</option>
+    </select>
+    <input type="file" id="halftoneimage" onchange="uploadSrcImage(event)" name="img" accept="image/*">
+ -->
+   <!--  <br />
+    <br />
+
+    <label for="shaperenderers">Choose the shape:</label>
     <select name="shaperenderers" id="shaperenderers" onchange="changeShape(event)"></select>
+
+
+    <br />
+    <br />
+
+    <input type="color" name="fillcolor" id="fillcolor" oninput="changeFillColor(event)"></input>
+    <label for="fillcolor"> Choose a shape color </label>
 
 
     <br />
@@ -43,32 +61,14 @@
     <br />
     <br />
 
-    <label for="refreshrate">When using webcam, how many milliseconds between refreshes:</label>
-    <input type="range" name="refreshrate" id="refreshrate" min="25" max="500" value="150" oninput="changeRefreshRate(event)"></input>
-
+    <button onclick="location.href = 'foreground.html';">Share</button>
 
     <br />
     <br />
+ -->
+    
 
-
-    <div id="crosssize-container" style="display: none">
-        <label for="crosssize">Choose a cross size:</label>
-        <input type="range" name="crosssize" id="crosssize" min="1" max="50" value="7" oninput="changeCrossSize(event)"></input>
-
-        <br />
-        <br />
-
-    </div>
-
-    <input type="color" name="fillcolor" id="fillcolor" oninput="changeFillColor(event)"></input>
-    <label for="fillcolor"> Choose a shape color </label>
-    <input type="color" name="backgroundcolor" id="backgroundcolor" value="#ffffff" oninput="changeBackgroundColor(event)"></input>
-    <label for="backgroundcolor"> Choose a background color (not seen if using an image)</label>
-
-    <br />
-    <br />
-
-    <label for="backgroundimage">Choose a background image</label>
+        <label for="backgroundimage">Choose a background image</label>
     <select name="backgroundimage" id="backgroundimage" onchange="changeBGImage(event)">
         <option>none</option>
         <option>sampleimages/sample-texture-a.jpg</option>
@@ -80,18 +80,35 @@
 
     <br />
     <br />
+<!-- 
+    <label for="refreshrate">When using webcam, how many milliseconds between refreshes:</label>
+    <input type="range" name="refreshrate" id="refreshrate" min="25" max="500" value="150" oninput="changeRefreshRate(event)"></input>
 
-    <label for="halftoneimage">Choose a halftone image</label>
-    <select name="halftoneimage" id="halftoneimage" onchange="changeSrcImage(event)">
-        <option>sampleimages/astronaut.jpg</option>
-        <option>sampleimages/obama.jpeg</option>
-        <option>sampleimages/thirtyrock.jpeg</option>
-        <option>camera</option>
-    </select>
-    <input type="file" id="halftoneimage" onchange="uploadSrcImage(event)" name="img" accept="image/*">
 
     <br />
     <br />
+ -->
+
+    <div id="crosssize-container" style="display: none">
+        <label for="crosssize">Choose a cross size:</label>
+        <input type="range" name="crosssize" id="crosssize" min="1" max="50" value="7" oninput="changeCrossSize(event)"></input>
+
+        <br />
+        <br />
+
+    </div>
+
+    <input type="color" name="backgroundcolor" id="backgroundcolor" value="#ffffff" oninput="changeBackgroundColor(event)"></input>
+    <label for="backgroundcolor"> Choose a background color (not seen if using an image)</label>
+
+    <br />
+    <br />
+
+    <button onclick="location.href = 'TestPageUZ.html';">Remix It!</button>
+    <br />
+    <br />
+
+<!-- 
 
     <label for="blendmode">Choose a blend mode</label>
     <select name="blendmode" id="blendmode" onchange="changeBlendMode(event)">
@@ -114,7 +131,7 @@
     </select>
 
     <br />
-    <br />
+    <br /> -->
 
     <halftone-svg id="halftone" shapetype="altcircles" src="./sampleimages/astronaut.jpg">
         <div id="bgimage" style="width: 100%; height: 100%; background-size: cover; background-position: center"></div>
