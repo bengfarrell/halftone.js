@@ -15,6 +15,7 @@ export class BaseHalftoneElement extends HTMLElement {
 
     loadImage(uri) {
         this.inputSource = new Image();
+        this.inputSource.crossOrigin = 'anonymous';
         this.inputSource.addEventListener('load', e => {
             if (this.renderer) {
                 this.renderer.input = this.inputSource;
