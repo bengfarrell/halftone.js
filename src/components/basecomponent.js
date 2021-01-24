@@ -218,6 +218,7 @@ export class BaseHalftoneElement extends HTMLElement {
 
     async startCamera() {
         this.inputSource = document.createElement('video');
+        this.inputSource.toggleAttribute('playsinline', true);
         this._stream = await navigator.mediaDevices.getUserMedia({
             'audio': false,
             'video': {
