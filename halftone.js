@@ -1360,6 +1360,7 @@ class BaseHalftoneElement extends HTMLElement {
 
     loadImage(uri) {
         this.inputSource = new Image();
+        this.inputSource.crossOrigin = 'anonymous';
         this.inputSource.addEventListener('load', e => {
             if (this.renderer) {
                 this.renderer.input = this.inputSource;
@@ -1510,6 +1511,7 @@ class BaseHalftoneElement extends HTMLElement {
         }
 
         this.domRoot.appendChild(this.backgroundSlot);
+        this.resize();
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -1561,6 +1563,7 @@ class BaseHalftoneElement extends HTMLElement {
 
     async startCamera() {
         this.inputSource = document.createElement('video');
+        this.inputSource.toggleAttribute('playsinline', true);
         this._stream = await navigator.mediaDevices.getUserMedia({
             'audio': false,
             'video': {
